@@ -1,16 +1,17 @@
 import os
 import subprocess
 import re
+import shutil
 from ftplib import FTP
 from termcolor import colored
 
-ftpUser = ""
-ftpPassword = ""
-ftpServer = ""
+ftpUser = "jw4102"
+ftpPassword = "jw4102"
+ftpServer = "frd107.seedstuff.ca"
 ftpPort = 32001
 
-remoteDirectoryToSync = ""
-localDirectoryToSync = ""
+remoteDirectoryToSync = "/rtorrent/downloads"
+localDirectoryToSync = "/Users/jwisdom/Movies"
 
 class FileSyncer:
     ftpConnection = None
@@ -73,6 +74,17 @@ def checkRemoteFiles(server, user, password, port, remoteFolder):
     ftp.close()
     return listOfFiles
 
+
+def fileDownload(ftpConnection, fileName, destination):
+    print colored("Downloading file: " + fileName, "green")
+    file = open(fileName, 'wb')
+    ftpConnection.retrbinary('RETR '+ fileName, file.write)
+    file.close()
+
+    print colored("Moving downloaded file: " + fileName + " to: " + destination + "/" + fileName, "blue")
+    shutil.move(fileName, destination + "/" + fileName)
+    
+
 def downloadMissingFiles(server, user, password, port, missingFiles, sourceFolder, destinationFolder):
     print "Beginning Downloads"
     ftp = ftpConnect(server, user, password, port)
@@ -89,20 +101,20 @@ def downloadMissingFiles(server, user, password, port, missingFiles, sourceFolde
             print colored("Unable to create directory: " + destinationFolder + "/" + f + " already exists.", "red")
 
         for filename in filenames:
-            archiveRegEx = re.compile("\.(rar|nfo|r[0-9]{2}|s[0-9]{2})$")
-            
-            if(archiveRegEx.search(filename) != None): # the file we're on is not a directory, let's continue and download the file
+            allowedRegEx = re.compile("\.(rar|r[0-9]{2}|s[0-9]{2})$")
+            disallowedRegEx = re.compile("\.(nfo|mp4|avi|mkv)$")
+
+            if(allowedRegEx.search(filename) != None): # the file we're on is not a directory, let's continue and download the file
                 local_filename = os.path.join(destinationFolder + "/" + f, filename)
                 print colored("Attempting To Download: " + local_filename, "yellow")
                 
                 if(os.path.exists(local_filename) == False):
-                    print colored("Downloading file: " + local_filename, "green")
-                    file = open(local_filename, 'wb')
-                    ftp.retrbinary('RETR '+ filename, file.write)
-                    file.close()
+                    fileDownload(ftp, filename, destinationFolder + "/" + f)
 
                 else:
                     print colored("Unable to download file: " + local_filename + " already exists.", "red")
+            elif(disallowedRegEx.search(filename)): 
+                continue
             else: #we need to create another directory
                 subfiles = []
                 if(os.path.isdir(destinationFolder + "/" + f + "/" + filename) == False):
@@ -111,15 +123,12 @@ def downloadMissingFiles(server, user, password, port, missingFiles, sourceFolde
                     ftp.cwd(sourceFolder + "/" + f + "/" + filename)
                     ftp.retrlines('NLST', subfiles.append)
                     for subfile in subfiles:
-                        if(subfile.lower().endswith((".rar", ".r*", ".nfo"))):
+                        if(allowedRegEx.search(subfile)):
                             sub_local_filename = os.path.join(destinationFolder + "/" + f + "/" + filename, subfile)
                             print colored("Attempting To Download: " + sub_local_filename, "yellow")
                             
                             if(os.path.exists(sub_local_filename) == False):
-                                print colored("Downloading file: " + sub_local_filename, "green")
-                                file = open(sub_local_filename, 'wb')
-                                ftp.retrbinary('RETR '+ subfile, file.write)
-                                file.close()
+                                fileDownload(ftp, sub_local_filename, destinationFolder + "/" + f)
 
                             else:
                                 print colored("Unable to download file: " + sub_local_filename + " already exists.", "red")
