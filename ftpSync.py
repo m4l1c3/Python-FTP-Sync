@@ -33,7 +33,7 @@ class FileSyncer:
         createFtpConnection()
 
     def createFtpConnection():
-        cprint("Opening FTP Connection", "green")
+        print("Opening FTP Connection", "green")
         self.ftpConnection = FTP()
         self.ftpConnection.connect(self.ftpServer, self.ftpPort)
         self.ftpConnection.login(self.ftpUser, self.ftpPassword)
