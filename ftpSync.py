@@ -5,13 +5,13 @@ import shutil
 from ftplib import FTP
 from termcolor import colored
 
-ftpUser = "jw4102"
-ftpPassword = "jw4102"
-ftpServer = "frd107.seedstuff.ca"
+ftpUser = ""
+ftpPassword = ""
+ftpServer = ""
 ftpPort = 32001
 
-remoteDirectoryToSync = "/rtorrent/downloads"
-localDirectoryToSync = "/Users/jwisdom/Movies"
+remoteDirectoryToSync = ""
+localDirectoryToSync = ""
 
 class FileSyncer:
     ftpConnection = None
