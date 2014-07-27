@@ -180,15 +180,17 @@ def checkRemoteFiles(server, user, password, port, remoteFolder):
 
 
 def fileDownload(ftpConnection, fileName, destination):
-    logger("Downloading file: " + fileName + "\n")
-    file = open(fileName, 'wb')
-    
-    ftpConnection.retrbinary('RETR '+ fileName, file.write)
-    file.close()
+    try:
+        logger("Downloading file: " + fileName)
+        file = open(fileName, 'wb')
+        
+        ftpConnection.retrbinary('RETR '+ fileName, file.write)
+        file.close()
 
-    logger("Moving downloaded file: " + fileName + " to: " + destination + "/" + fileName + "\n")
-    shutil.move(fileName, destination + "/" + fileName)
-    
+        logger("Moving downloaded file: " + fileName + " to: " + destination + "/" + fileName)
+        shutil.move(fileName, destination + "/" + fileName)
+    except Exception as e:
+        logger(e)
 
 def downloadMissingFiles(server, user, password, port, missingFiles, sourceFolder, destinationFolder):
     logger("Beginning Downloads at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M") + "\n")
@@ -206,8 +208,8 @@ def downloadMissingFiles(server, user, password, port, missingFiles, sourceFolde
             logger("Unable to create directory: " + destinationFolder + "/" + f + " already exists.")
 
         for filename in filenames:
-            allowedRegEx = re.compile("\.(rar|r[0-9]{2}|s[0-9]{2})$")
-            disallowedRegEx = re.compile("\.(nfo|svf|mp4|avi|mkv)$")
+            allowedRegEx = re.compile("\.(rar|iso|zip|z[0-9]{2}|r[0-9]{2}|s[0-9]{2})$")
+            disallowedRegEx = re.compile("\.(nfo|sfv|mp4|avi|mkv)$")
 
             if(allowedRegEx.search(filename) != None): # the file we're on is not a directory, let's download the file
                 local_filename = os.path.join(destinationFolder + "/" + f, filename)
@@ -215,16 +217,18 @@ def downloadMissingFiles(server, user, password, port, missingFiles, sourceFolde
                 
                 if(os.path.exists(local_filename) == False):
                     fileDownload(ftp, filename, destinationFolder + "/" + f)
-
                 else:
+                    #TODO: add logic to compare remote/local files and delete or move on, log which happens
                     logger("Unable to download file: " + local_filename + " already exists.")
             elif(disallowedRegEx.search(filename)): #not an allowed download, skip this round
                 continue
             else: #we need to create another directory
                 subfiles = []
-                if(os.path.isdir(destinationFolder + "/" + f + "/" + filename) == False):
+                if(os.path.isdir(destinationFolder + "/" + f + "/" + filename)):
+                    logger("Unable to create directory: " + destinationFolder + "/" + f + "/" + filename + " directory already exists.")
+                else:
                     os.mkdir(destinationFolder + "/" + f + "/" + filename)
-                    logger("Attempting to create: " + sourceFolder + "/" + f + "/" + filename)
+                    logger("Attempting to create: " + destinationFolder + "/" + f + "/" + filename)
                     ftp.cwd(sourceFolder + "/" + f + "/" + filename)
                     ftp.retrlines('NLST', subfiles.append)
                     for subfile in subfiles:
@@ -237,8 +241,6 @@ def downloadMissingFiles(server, user, password, port, missingFiles, sourceFolde
 
                             else:
                                 logger("Unable to download file: " + sub_local_filename + " already exists.")
-                else:
-                    logger("Unable to create directory: " + destinationFolder + "/" + f + "/" + filename + " directory already exists.")
 
 
     logger("Closing FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
