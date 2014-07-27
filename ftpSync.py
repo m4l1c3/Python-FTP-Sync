@@ -5,13 +5,36 @@ import shutil
 from ftplib import FTP
 from termcolor import colored
 
-ftpUser = ""
-ftpPassword = ""
-ftpServer = ""
-ftpPort = 32001
+def init():
+    if os.environ.get("FtpSyncServer") is None or os.environ.get("FtpSyncUser") is None or os.environ.get("FtpSyncPassword") is None or os.environ.get("FtpSyncPort") is None or os.environ.get("FtpSyncRemoteDirectory") is None or os.environ.get("FtpSyncLocalDirectory") is None:
+        setupEnvironmentVariables()
 
-remoteDirectoryToSync = ""
-localDirectoryToSync = ""
+    listOfLocalFiles = checkLocalFiles(os.environ["FtpSyncLocalDirectory"])
+    listOfRemoteFiles = checkRemoteFiles(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"])
+    localMissingFiles = findMissingFiles(listOfLocalFiles, listOfRemoteFiles)
+
+    downloadMissingFiles(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], localMissingFiles, os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
+    cleanupDownloadsFolder(os.environ["FtpSyncLocalDirectory"])
+
+def setupEnvironmentVariables():
+
+    ftpUser = raw_input("What is your FTP user name? ")
+    os.environ["FtpSyncUser"] = ftpUser
+
+    ftpServer = raw_input("What is your FTP server? ")
+    os.environ["FtpSyncServer"] = ftpServer
+
+    ftpPassword = raw_input("What is your FTP password? ")
+    os.environ["FtpSyncPassword"] = ftpPassword
+
+    ftpPort = raw_input("What is the FTP port? ")
+    os.environ["FtpSyncPort"] = ftpPort
+
+    remoteDirectoryToSync = raw_input("What remote directory would you like to sync? ")
+    os.environ["FtpSyncRemoteDirectory"] = remoteDirectoryToSync
+
+    localDirectoryToSync = raw_input("What local direcory would you like to sync? ")
+    os.environ["FtpSyncLocalDirectory"] = localDirectoryToSync
 
 class FileSyncer:
     ftpConnection = None
@@ -172,9 +195,4 @@ def checkLocalFiles(localPath):
 def findMissingFiles(localList, remoteList):
     return [i for i in remoteList if i not in localList]
 
-listOfLocalFiles = checkLocalFiles(localDirectoryToSync)
-listOfRemoteFiles = checkRemoteFiles(ftpServer, ftpUser, ftpPassword, ftpPort, remoteDirectoryToSync)
-localMissingFiles = findMissingFiles(listOfLocalFiles, listOfRemoteFiles)
-
-downloadMissingFiles(ftpServer, ftpUser, ftpPassword, ftpPort, localMissingFiles, remoteDirectoryToSync, localDirectoryToSync)
-cleanupDownloadsFolder(localDirectoryToSync)
+init()
