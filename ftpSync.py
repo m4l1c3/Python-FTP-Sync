@@ -6,9 +6,6 @@ from ftplib import FTP
 from termcolor import colored
 
 def init():
-    if os.environ.get("FtpSyncServer") is None or os.environ.get("FtpSyncUser") is None or os.environ.get("FtpSyncPassword") is None or os.environ.get("FtpSyncPort") is None or os.environ.get("FtpSyncRemoteDirectory") is None or os.environ.get("FtpSyncLocalDirectory") is None:
-        setupEnvironmentVariables()
-
     listOfLocalFiles = checkLocalFiles(os.environ["FtpSyncLocalDirectory"])
     listOfRemoteFiles = checkRemoteFiles(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"])
     localMissingFiles = findMissingFiles(listOfLocalFiles, listOfRemoteFiles)
@@ -16,25 +13,33 @@ def init():
     downloadMissingFiles(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], localMissingFiles, os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
     cleanupDownloadsFolder(os.environ["FtpSyncLocalDirectory"])
 
-def setupEnvironmentVariables():
+# def setupEnvironmentVariables():
+#     bashCommands = []
 
-    ftpUser = raw_input("What is your FTP user name? ")
-    os.environ["FtpSyncUser"] = ftpUser
+#     ftpUser = raw_input("What is your FTP user name? ")
+#     bashCommands.append("export FtpSyncUser=" + ftpUser)
 
-    ftpServer = raw_input("What is your FTP server? ")
-    os.environ["FtpSyncServer"] = ftpServer
+#     ftpServer = raw_input("What is your FTP server? ")
+#     bashCommands.append("export FtpSyncServer=" + ftpServer)
 
-    ftpPassword = raw_input("What is your FTP password? ")
-    os.environ["FtpSyncPassword"] = ftpPassword
+#     ftpPassword = raw_input("What is your FTP password? ")
+#     bashCommands.append("export FtpSyncPassword=" + ftpPassword)
 
-    ftpPort = raw_input("What is the FTP port? ")
-    os.environ["FtpSyncPort"] = ftpPort
+#     ftpPort = raw_input("What is the FTP port? ")
+#     bashCommands.append("export FtpSyncPort=" + ftpPort)
 
-    remoteDirectoryToSync = raw_input("What remote directory would you like to sync? ")
-    os.environ["FtpSyncRemoteDirectory"] = remoteDirectoryToSync
+#     remoteDirectoryToSync = raw_input("What remote directory would you like to sync? ")
+#     bashCommands.append("export FtpSyncRemoteDirectory=" + remoteDirectoryToSync)
 
-    localDirectoryToSync = raw_input("What local direcory would you like to sync? ")
-    os.environ["FtpSyncLocalDirectory"] = localDirectoryToSync
+#     localDirectoryToSync = raw_input("What local direcory would you like to sync? ")
+#     bashCommands.append("export FtpSyncLocalDirectory=" + localDirectoryToSync)
+ 
+#     for command in bashCommands:
+#         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+#         output = process.communicate()[0]
+
+#     print colored("Environment variables created", "red")
+
 
 class FileSyncer:
     ftpConnection = None
