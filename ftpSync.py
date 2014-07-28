@@ -38,10 +38,10 @@ def checkRemoteFiles(server, user, password, port, remoteFolder):
             raise
 
     for f in files:
-        logger("Adding remote file: " + f)
+        logger("Adding remote file: " + f + "\n")
         listOfFiles.append(f)
     
-    logger("Closing FTP Connection")
+    logger("Closing FTP Connection" + "\n")
     ftp.close()
     return listOfFiles
 
