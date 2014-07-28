@@ -32,9 +32,9 @@ def checkRemoteFiles(server, user, password, port, remoteFolder):
     
     try:
         files = ftp.nlst()
-    except ftplib.error_perm, resp:
+    except ftplib.error_perm, resp: #TODO: add more cases here
         if str(resp) == "550 No files found":
-            logger("No files in this directory -- 550 No files found")
+            logger("No files in this directory -- 550 No files found" + "\n")
         else:
             raise
 
@@ -49,13 +49,13 @@ def checkRemoteFiles(server, user, password, port, remoteFolder):
 
 def fileDownload(ftpConnection, fileName, destination):
     try:
-        logger("Downloading file: " + fileName)
+        logger("Downloading file: " + fileName + "\n")
         file = open(fileName, 'wb')
         
         ftpConnection.retrbinary('RETR '+ fileName, file.write)
         file.close()
 
-        logger("Moving downloaded file: " + fileName + " to: " + destination + "/" + fileName)
+        logger("Moving downloaded file: " + fileName + " to: " + destination + "/" + fileName + "\n")
         shutil.move(fileName, destination + "/" + fileName)
     except Exception as e:
         logger(e)
@@ -73,7 +73,7 @@ def downloadMissingFiles(server, user, password, port, missingFiles, sourceFolde
         if(os.path.isdir(destinationFolder + "/" + f) == False):
             os.mkdir(destinationFolder + "/" + f)
         else:
-            logger("Unable to create directory: " + destinationFolder + "/" + f + " already exists.")
+            logger("Unable to create directory: " + destinationFolder + "/" + f + " already exists.\n")
 
         for filename in filenames:
             allowedRegEx = re.compile("\.(rar|iso|zip|z[0-9]{2}|r[0-9]{2}|s[0-9]{2})$")
@@ -87,31 +87,31 @@ def downloadMissingFiles(server, user, password, port, missingFiles, sourceFolde
                     fileDownload(ftp, filename, destinationFolder + "/" + f)
                 else:
                     #TODO: add logic to compare remote/local files and delete or move on, log which happens
-                    logger("Unable to download file: " + local_filename + " already exists.")
+                    logger("Unable to download file: " + local_filename + " already exists.\n")
             elif(disallowedRegEx.search(filename)): #not an allowed download, skip this round
                 continue
             else: #we need to create another directory
                 subfiles = []
                 if(os.path.isdir(destinationFolder + "/" + f + "/" + filename)):
-                    logger("Unable to create directory: " + destinationFolder + "/" + f + "/" + filename + " directory already exists.")
+                    logger("Unable to create directory: " + destinationFolder + "/" + f + "/" + filename + " directory already exists.\n")
                 else:
                     os.mkdir(destinationFolder + "/" + f + "/" + filename)
-                    logger("Attempting to create: " + destinationFolder + "/" + f + "/" + filename)
+                    logger("Attempting to create: " + destinationFolder + "/" + f + "/" + filename + "\n")
                     ftp.cwd(sourceFolder + "/" + f + "/" + filename)
                     ftp.retrlines('NLST', subfiles.append)
                     for subfile in subfiles:
                         if(allowedRegEx.search(subfile)):
                             sub_local_filename = os.path.join(destinationFolder + "/" + f + "/" + filename, subfile)
-                            logger("Attempting To Download: " + sub_local_filename)
+                            logger("Attempting To Download: " + sub_local_filename + "\n")
                             
                             if(os.path.exists(sub_local_filename) == False):
                                 fileDownload(ftp, sub_local_filename, destinationFolder + "/" + f)
 
                             else:
-                                logger("Unable to download file: " + sub_local_filename + " already exists.")
+                                logger("Unable to download file: " + sub_local_filename + " already exists.\n")
 
 
-    logger("Closing FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+    logger("Closing FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M") + "\n")
     ftp.close()
 
 def iterateThroughDirectory(directory):
@@ -121,12 +121,12 @@ def iterateThroughDirectory(directory):
         os.chdir(os.path.realpath(dir))
         bashExtractCommand = "unrar x " + os.getcwd().replace(" ", "\ ") + "/*.rar"
         bashRemoveCommand = "rm -rf " + os.getcwd().replace(" ", "\ ") + "/*.r*"
-        logger("Running: " + bashExtractCommand)
+        logger("Running: " + bashExtractCommand + "\n")
         process = subprocess.Popen(bashExtractCommand, shell=True, stdout=subprocess.PIPE)
         output = process.communicate()[0]
     
     for dir in directories:    
-        logger("Removing: rar archives from: " + os.getcwd().replace(" ", "\ "))
+        logger("Removing: rar archives from: " + os.getcwd().replace(" ", "\ ") + "\n")
         process = subprocess.Popen(bashRemoveCommand, shell=True, stdout=subprocess.PIPE)
         output = process.communicate()[0]
 
