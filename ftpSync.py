@@ -16,138 +16,6 @@ def init():
     downloadMissingFiles(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], localMissingFiles, os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
     cleanupDownloadsFolder(os.environ["FtpSyncLocalDirectory"])
 
-# def setupEnvironmentVariables():
-#     bashCommands = []
-
-#     ftpUser = raw_input("What is your FTP user name? ")
-#     bashCommands.append("export FtpSyncUser=" + ftpUser)
-
-#     ftpServer = raw_input("What is your FTP server? ")
-#     bashCommands.append("export FtpSyncServer=" + ftpServer)
-
-#     ftpPassword = raw_input("What is your FTP password? ")
-#     bashCommands.append("export FtpSyncPassword=" + ftpPassword)
-
-#     ftpPort = raw_input("What is the FTP port? ")
-#     bashCommands.append("export FtpSyncPort=" + ftpPort)
-
-#     remoteDirectoryToSync = raw_input("What remote directory would you like to sync? ")
-#     bashCommands.append("export FtpSyncRemoteDirectory=" + remoteDirectoryToSync)
-
-#     localDirectoryToSync = raw_input("What local direcory would you like to sync? ")
-#     bashCommands.append("export FtpSyncLocalDirectory=" + localDirectoryToSync)
- 
-#     for command in bashCommands:
-#         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-#         output = process.communicate()[0]
-
-#     print colored("Environment variables created", "red")
-
-
-class FileSyncer:
-    ftpConnection = None
-    ftpUser = ""
-    ftpPassword = ""
-    ftpServer = ""
-    ftpPort = 21
-    remoteDirectoryToSync = ""
-    localDirectoryToSync = ""
-
-    def __init__(self, server, user, password, port, remoteDirectory, localDirectory):
-        self.ftpServer = server
-        self.ftpUser = user
-        self.ftpPassword = password
-        self.ftpPort = port
-        self.remoteDirectoryToSync = remoteDirectory
-        self.localDirectoryToSync = localDirectory
-        self.ftpConnection = self.createFtpConnection()
-        createFtpConnection()
-
-    def createFtpConnection():
-        logger("Opening FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
-        self.ftpConnection = FTP()
-        self.ftpConnection.connect(self.ftpServer, self.ftpPort)
-        self.ftpConnection.login(self.ftpUser, self.ftpPassword)
-
-    def closeFtpConnection():
-        print colored("Closing FTP Connection", "green")
-        self.ftpConnection.close()
-
-    def checkLocalFiles():
-        directories = [d for d in os.listdir(self.localDirectoryToSync) if os.path.isdir(os.path.join(self.localDirectoryToSync, d))]
-        dirs = []
-        for d in directories:
-            dirs.append(d)
-
-        return dirs
-
-    def iterateThroughDirectory():
-        directories = set(folder for folder, subfolders, files in os.walk(self.localDirectoryToSync) for file_ in files if os.path.splitext(file_)[1] == '.rar')
-        
-        for dir in directories:
-            os.chdir(os.path.realpath(dir))
-            bashExtractCommand = "unrar x " + os.getcwd().replace(" ", "\ ") + "/*.rar"
-            bashRemoveCommand = "rm -rf " + os.getcwd().replace(" ", "\ ") + "/*.r*"
-            logger("Running: " + bashExtractCommand)
-            process = subprocess.Popen(bashExtractCommand, shell=True, stdout=subprocess.PIPE)
-            output = process.communicate()[0]
-        
-        for dir in directories:    
-            logger("Removing: rar archives from: " + os.getcwd().replace(" ", "\ "))
-            process = subprocess.Popen(bashRemoveCommand, shell=True, stdout=subprocess.PIPE)
-            output = process.communicate()[0]
-
-    def cleanupDownloadsFolder(downloadsFolder):
-        iterateThroughDirectory(downloadsFolder)
-
-    def checkRemoteFiles():
-        listOfFiles = []
-        
-        self.ftpConnection = self.createFtpConnection()
-        self.ftpConnection.cwd(self.remoteDirectoryToSync)
-        
-        logger("Creating Remote File List:")
-        
-        try:
-            files = self.ftpConnection.nlst()
-        except ftplib.error_perm, resp:
-            if str(resp) == "550 No files found":
-                logger("No files in this directory -- 550 No files found")
-            else:
-                raise
-
-        for f in files:
-            logger("Adding remote file: " + f)
-            listOfFiles.append(f)
-        
-        logger("Closing FTP Connection")
-        self.closeFtpConnection()
-
-        return listOfFiles
-
-    def fileDownload(fileName, destination):
-        logger("Downloading file: " + fileName + "\n")
-        file = open(fileName, 'wb')
-        
-        self.ftpConnection.retrbinary('RETR '+ fileName, file.write)
-        file.close()
-
-        logger("Moving downloaded file: " + fileName + " to: " + destination + "/" + fileName + "\n")
-        shutil.move(fileName, destination + "/" + fileName)
-
-    def findMissingFiles(localList, remoteList):
-        return [i for i in remoteList if i not in localList]
-
-    def logger(message):
-        if(os.path.isdir("Logs") == False):
-            os.mkdir("Logs")
-
-        LOG_FILENAME = "Logs/" + datetime.datetime.now().strftime("%Y-%m-%d") + ".log"
-        logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
-        logging.debug(message)
-
-
-
 def ftpConnect(server, user, password, port):
     logger("Opening FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
     ftp = FTP()
@@ -287,3 +155,133 @@ def logger(message):
     logging.debug(message)
 
 init()
+
+# def setupEnvironmentVariables():
+#     bashCommands = []
+
+#     ftpUser = raw_input("What is your FTP user name? ")
+#     bashCommands.append("export FtpSyncUser=" + ftpUser)
+
+#     ftpServer = raw_input("What is your FTP server? ")
+#     bashCommands.append("export FtpSyncServer=" + ftpServer)
+
+#     ftpPassword = raw_input("What is your FTP password? ")
+#     bashCommands.append("export FtpSyncPassword=" + ftpPassword)
+
+#     ftpPort = raw_input("What is the FTP port? ")
+#     bashCommands.append("export FtpSyncPort=" + ftpPort)
+
+#     remoteDirectoryToSync = raw_input("What remote directory would you like to sync? ")
+#     bashCommands.append("export FtpSyncRemoteDirectory=" + remoteDirectoryToSync)
+
+#     localDirectoryToSync = raw_input("What local direcory would you like to sync? ")
+#     bashCommands.append("export FtpSyncLocalDirectory=" + localDirectoryToSync)
+ 
+#     for command in bashCommands:
+#         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+#         output = process.communicate()[0]
+
+#     print colored("Environment variables created", "red")
+
+
+# class FileSyncer:
+#     ftpConnection = None
+#     ftpUser = ""
+#     ftpPassword = ""
+#     ftpServer = ""
+#     ftpPort = 21
+#     remoteDirectoryToSync = ""
+#     localDirectoryToSync = ""
+
+#     def __init__(self, server, user, password, port, remoteDirectory, localDirectory):
+#         self.ftpServer = server
+#         self.ftpUser = user
+#         self.ftpPassword = password
+#         self.ftpPort = port
+#         self.remoteDirectoryToSync = remoteDirectory
+#         self.localDirectoryToSync = localDirectory
+#         self.ftpConnection = self.createFtpConnection()
+#         createFtpConnection()
+
+#     def createFtpConnection():
+#         logger("Opening FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+#         self.ftpConnection = FTP()
+#         self.ftpConnection.connect(self.ftpServer, self.ftpPort)
+#         self.ftpConnection.login(self.ftpUser, self.ftpPassword)
+
+#     def closeFtpConnection():
+#         print colored("Closing FTP Connection", "green")
+#         self.ftpConnection.close()
+
+#     def checkLocalFiles():
+#         directories = [d for d in os.listdir(self.localDirectoryToSync) if os.path.isdir(os.path.join(self.localDirectoryToSync, d))]
+#         dirs = []
+#         for d in directories:
+#             dirs.append(d)
+
+#         return dirs
+
+#     def iterateThroughDirectory():
+#         directories = set(folder for folder, subfolders, files in os.walk(self.localDirectoryToSync) for file_ in files if os.path.splitext(file_)[1] == '.rar')
+        
+#         for dir in directories:
+#             os.chdir(os.path.realpath(dir))
+#             bashExtractCommand = "unrar x " + os.getcwd().replace(" ", "\ ") + "/*.rar"
+#             bashRemoveCommand = "rm -rf " + os.getcwd().replace(" ", "\ ") + "/*.r*"
+#             logger("Running: " + bashExtractCommand)
+#             process = subprocess.Popen(bashExtractCommand, shell=True, stdout=subprocess.PIPE)
+#             output = process.communicate()[0]
+        
+#         for dir in directories:    
+#             logger("Removing: rar archives from: " + os.getcwd().replace(" ", "\ "))
+#             process = subprocess.Popen(bashRemoveCommand, shell=True, stdout=subprocess.PIPE)
+#             output = process.communicate()[0]
+
+#     def cleanupDownloadsFolder(downloadsFolder):
+#         iterateThroughDirectory(downloadsFolder)
+
+#     def checkRemoteFiles():
+#         listOfFiles = []
+        
+#         self.ftpConnection = self.createFtpConnection()
+#         self.ftpConnection.cwd(self.remoteDirectoryToSync)
+        
+#         logger("Creating Remote File List:")
+        
+#         try:
+#             files = self.ftpConnection.nlst()
+#         except ftplib.error_perm, resp:
+#             if str(resp) == "550 No files found":
+#                 logger("No files in this directory -- 550 No files found")
+#             else:
+#                 raise
+
+#         for f in files:
+#             logger("Adding remote file: " + f)
+#             listOfFiles.append(f)
+        
+#         logger("Closing FTP Connection")
+#         self.closeFtpConnection()
+
+#         return listOfFiles
+
+#     def fileDownload(fileName, destination):
+#         logger("Downloading file: " + fileName + "\n")
+#         file = open(fileName, 'wb')
+        
+#         self.ftpConnection.retrbinary('RETR '+ fileName, file.write)
+#         file.close()
+
+#         logger("Moving downloaded file: " + fileName + " to: " + destination + "/" + fileName + "\n")
+#         shutil.move(fileName, destination + "/" + fileName)
+
+#     def findMissingFiles(localList, remoteList):
+#         return [i for i in remoteList if i not in localList]
+
+#     def logger(message):
+#         if(os.path.isdir("Logs") == False):
+#             os.mkdir("Logs")
+
+#         LOG_FILENAME = "Logs/" + datetime.datetime.now().strftime("%Y-%m-%d") + ".log"
+#         logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
+#         logging.debug(message)
