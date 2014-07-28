@@ -119,6 +119,7 @@ class FileSyncer:
                 # self.createLocalDirectory(singleFile)
                 hasSubDirectories = True
             else: #We do not have a sub directory
+                self.createLocalDirectory(destinationFolder)
                 self.downloadFile(objFtp, f, singleFile)
 
         return hasSubDirectories
@@ -150,7 +151,6 @@ class FileSyncer:
             file = open(fileToDownload, 'wb')
             objFtp.retrbinary('RETR '+ fileToDownload, file.write)
             file.close()
-            self.createLocalDirectory(destinationFolder)
             self.moveFile(fileToDownload, destinationFolder)
 
         except Exception as e:
@@ -178,9 +178,11 @@ class FileSyncer:
                 fileNames = []
                 ftp.cwd(self.remoteDirectoryToSync + "/" + f)
                 ftp.retrlines('NLST', fileNames.append)
+                self.createLocalDirectory(f)
                 self.downloadFolder(ftp, f)
         except Exception as e:
             logger("Exception: " + str(e))
+
         self.closeFtpConnection(ftp)
 
 def init():
