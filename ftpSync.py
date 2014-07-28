@@ -16,7 +16,7 @@ def init():
     cleanupDownloadsFolder(os.environ["FtpSyncLocalDirectory"])
 
 def ftpConnect(server, user, password, port):
-    logger("Opening FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+    logger("Opening FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M") + "\n")
     ftp = FTP()
     ftp.connect(server, port)
     ftp.login(user, password)
@@ -27,7 +27,7 @@ def checkRemoteFiles(server, user, password, port, remoteFolder):
     ftp = ftpConnect(server, user, password, port)
     ftp.cwd(remoteFolder)
     
-    logger("Create Remote File List:")
+    logger("Create Remote File List:\n")
     
     try:
         files = ftp.nlst()
@@ -48,16 +48,24 @@ def checkRemoteFiles(server, user, password, port, remoteFolder):
 
 def fileDownload(ftpConnection, fileName, destination):
     try:
-        logger("Downloading file: " + fileName + "\n")
+        ftpConnection.sendcmd("TYPE i")
+        logger("Downloading file: " + fileName + " " + str(ftpConnection.size(fileName) / 1000 / 1000) + "MB\n")
         file = open(fileName, 'wb')
         
         ftpConnection.retrbinary('RETR '+ fileName, file.write)
         file.close()
+        fileMove(fileName, destination)
 
+    except Exception as e:
+        logger("Exception: " + str(e) + "\n")
+
+def fileMove(fileName, destination):
+    try:
         logger("Moving downloaded file: " + fileName + " to: " + destination + "/" + fileName + "\n")
         shutil.move(fileName, destination + "/" + fileName)
+
     except Exception as e:
-        logger(e)
+        logger("Exception: " + str(e) + "\n")
 
 def downloadMissingFiles(server, user, password, port, missingFiles, sourceFolder, destinationFolder):
     logger("Beginning Downloads at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M") + "\n")
@@ -80,7 +88,7 @@ def downloadMissingFiles(server, user, password, port, missingFiles, sourceFolde
 
             if(allowedRegEx.search(filename) != None): # the file we're on is not a directory, let's download the file
                 local_filename = os.path.join(destinationFolder + "/" + f, filename)
-                logger("Attempting To Download: " + local_filename)
+                logger("Attempting To Download: " + local_filename + "\n")
                 
                 if(os.path.exists(local_filename) == False):
                     fileDownload(ftp, filename, destinationFolder + "/" + f)
@@ -149,7 +157,7 @@ def logger(message):
     if(os.path.isdir("Logs") == False):
         os.mkdir("Logs")
 
-    LOG_FILENAME = "Logs/" + datetime.now().strftime("%Y-%m-%d") + ".log"
+    LOG_FILENAME = "Logs/" + datetime.datetime.now().strftime("%Y-%m-%d") + ".log"
     logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
     logging.debug(message)
 
