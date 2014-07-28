@@ -282,7 +282,7 @@ def logger(message):
     if(os.path.isdir("Logs") == False):
         os.mkdir("Logs")
 
-    LOG_FILENAME = "Logs/" + datetime.datetime.now().strftime("%Y-%m-%d") + ".log"
+    LOG_FILENAME = "Logs/" + datetime.now().strftime("%Y-%m-%d") + ".log"
     logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
     logging.debug(message)
 
