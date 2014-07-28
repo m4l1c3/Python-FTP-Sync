@@ -6,7 +6,6 @@ import logging
 import datetime
 
 from ftplib import FTP
-#from termcolor import colored
 
 def init():
     listOfLocalFiles = checkLocalFiles(os.environ["FtpSyncLocalDirectory"])
