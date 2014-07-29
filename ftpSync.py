@@ -43,6 +43,7 @@ class FileSyncer:
     ftpPort = 21
     remoteDirectoryToSync = ""
     localDirectoryToSync = ""
+    subScans = 0
 
     def __init__(self, server, user, password, port, remoteDirectory, localDirectory):
         self.ftpServer = server
@@ -96,7 +97,6 @@ class FileSyncer:
             
             logger("Create Remote File List:\n")
             files = ftp.nlst()
-            
             for f in files:
                 logger("Adding remote file: " + f + "\n")
                 listOfFiles.append(f)
@@ -126,14 +126,18 @@ class FileSyncer:
 
     def downloadFolder(self, objFtp, folderToScan):
         fileNames = []
+        
         try:
+            self.createLocalDirectory(folderToScan)
             objFtp.cwd(self.remoteDirectoryToSync + "/" + folderToScan)
             objFtp.retrlines('NLST', fileNames.append)
             
             for f in fileNames:
+
                 if(self.isDirectory(objFtp, f)):
+                    self.subScans += 1
                     if(self.checkForDirectories(objFtp, f) == True):
-                        print("i am here too downloading a ")
+                        print("i am here too downloading a # of scans: " + str(self.subScans))
                         self.downloadFolder(objFtp, f)
                     else:
                         print("i am here again doing something else")
@@ -168,7 +172,6 @@ class FileSyncer:
         return isASubDirectory
 
     def downloadMissingFiles(self, missingFiles):
-        
         logger("Beginning Downloads at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M") + "\n")
         try:
             ftp = self.createFtpConnection()
@@ -178,7 +181,6 @@ class FileSyncer:
                 fileNames = []
                 ftp.cwd(self.remoteDirectoryToSync + "/" + f)
                 ftp.retrlines('NLST', fileNames.append)
-                self.createLocalDirectory(f)
                 self.downloadFolder(ftp, f)
         except Exception as e:
             logger("Exception: " + str(e))
