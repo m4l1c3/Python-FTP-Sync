@@ -17,24 +17,6 @@ def logger(message):
     logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
     logging.debug(message)
 
-class DirEntry: # found at: http://www.java2s.com/Tutorial/Python/0420__Network/nlstwithfiledirectorydetectionexample.htm
-    def __init__(self, filename, ftpobj, startingdir = None):
-        self.filename = filename
-        if startingdir == None:
-            startingdir = ftpobj.pwd()
-        try:
-            ftpobj.cwd(filename)
-            self.filetype = 'd'
-            ftpobj.cwd(startingdir)
-        except ftplib.error_perm:
-            self.filetype = '-'
-        
-    def gettype(self):
-        return self.filetype
-
-    def getfilename(self):
-        return self.filename
-
 class FileSyncer:
     ftpConnection = None
     ftpUser = ""
