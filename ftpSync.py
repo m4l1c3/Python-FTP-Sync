@@ -34,7 +34,6 @@ class FileSyncer:
         self.ftpPort = port
         self.remoteDirectoryToSync = remoteDirectory
         self.localDirectoryToSync = localDirectory
-        # self.ftpConnection = self.createFtpConnection()
 
     def createFtpConnection(self):
         logger("Opening FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
