@@ -96,11 +96,7 @@ class FileSyncer:
             ftp.cwd(self.remoteDirectoryToSync)
             
             logger("Create Remote File List:\n")
-            files = ftp.nlst()
-            for f in files:
-                logger("Adding remote file: " + f + "\n")
-                listOfFiles.append(f)
-
+            listOfFiles = ftp.retrlines('NLST', fileNames.append)
             self.closeFtpConnection(ftp)
         
         except ftplib.error_perm as resp: #TODO: add more cases here
