@@ -151,7 +151,7 @@ class FileSyncer:
     def downloadFile(self, objFtp, destinationFolder, fileToDownload):
         try:
             objFtp.sendcmd("TYPE i")
-            logger("Downloading file: " + fileToDownload + " " + str(objFtp.size(fileToDownload) / 1000 / 1000) + "MB\n")
+            logger("Downloading file: " + fileToDownload + " " + str(objFtp.size(fileToDownload) / 1024 / 1024) + "MB\n")
             file = open(fileToDownload, 'wb')
             objFtp.retrbinary('RETR '+ fileToDownload, file.write)
             file.close()
