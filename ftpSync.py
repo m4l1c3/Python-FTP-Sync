@@ -1,13 +1,6 @@
-import os
-import subprocess
-import re
-import shutil
-import logging
-import datetime
+import os, subprocess, re, shutil, logging, datetime, json
 
 from ftplib import FTP
-
-
 
 def logger(message):
     if(os.path.isdir("Logs") == False):
@@ -16,6 +9,27 @@ def logger(message):
     LOG_FILENAME = "Logs/" + datetime.datetime.now().strftime("%Y-%m-%d") + ".log"
     logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
     logging.debug(message)
+
+class DirectoryTree:
+    directories = {}
+
+    def __init__(self):
+        self.directories = {}
+
+class Directory():
+    name = "";
+    folders = []
+    files = []
+
+    def __init__(self, name, files = []):
+        self.name = name
+        self.files = files
+
+class File():
+    name = ""
+
+    def __init__(self, name):
+        self.name = name
 
 class FileSyncer:
     ftpConnection = None
@@ -26,6 +40,7 @@ class FileSyncer:
     remoteDirectoryToSync = ""
     localDirectoryToSync = ""
     subScans = 0
+    currentWorkingDirectory = ""
 
     def __init__(self, server, user, password, port, remoteDirectory, localDirectory):
         self.ftpServer = server
@@ -42,51 +57,48 @@ class FileSyncer:
         ftp.login(self.ftpUser, self.ftpPassword)
         return ftp
 
-    def closeFtpConnection(self, ftpConnection):
-        logger("Closing FTP Connection")
-        ftpConnection.close()
-
-    def findMissingFiles(self, localList, remoteList):
-        return [i for i in remoteList if i not in localList]
-
     def checkLocalFiles(self):
-        return [d for d in os.listdir(self.localDirectoryToSync) if os.path.isdir(os.path.join(self.localDirectoryToSync, d))]
-
-    def moveFile(self, fileName, destination):
+        listOfFiles = []
+        
         try:
-            logger("Moving downloaded file: " + fileName + " to: " + destination + "/" + fileName + "\n")
-            shutil.move(fileName, self.localDirectoryToSync + "/" + destination + "/" + fileName)
+            listOfFiles = [d for d in os.listdir(os.environ["FtpSyncLocalDirectory"]) if os.path.isdir(os.environ["FtpSyncLocalDirectory"])]
 
         except Exception as e:
-            logger("Exception: " + str(e) + "\n")
+            logger("Error finding local files at " + os.environ["FtpSyncLocalDirectory"] + ": " + e)
 
-    def createLocalDirectory(self, folderToCreate):
-        try:
-            if(os.path.isdir(self.localDirectoryToSync + "/" + folderToCreate) == False):
-                os.mkdir(self.localDirectoryToSync + "/" + folderToCreate)
-            else:
-                logger("Unable to create directory: " + self.localDirectoryToSync + "/" + folderToCreate + " already exists.\n")
-        except Exception as e:
-            logger("Error creating local directory: " + e)
+        return listOfFiles
+    
+    def changeWorkingDirectory(self, objFtp, directoryToChangeTo):
+        self.currentWorkingDirectory = directoryToChangeTo
+        objFtp.cwd(directoryToChangeTo)
 
     def checkRemoteFiles(self):
         listOfFiles = []
 
         try:
             ftp = self.createFtpConnection()
-            ftp.cwd(self.remoteDirectoryToSync)
-            
+            self.changeWorkingDirectory(ftp, self.remoteDirectoryToSync)
             logger("Create Remote File List:\n")
-            listOfFiles = ftp.retrlines('NLST', fileNames.append)
-            self.closeFtpConnection(ftp)
-        
-        except ftplib.error_perm as resp: #TODO: add more cases here
+            ftp.retrlines('NLST', listOfFiles.append)
+            ftp.close()
+
+        except Exception as resp: #TODO: add more cases here
             if str(resp) == "550 No files found":
-                logger("No files in this directory -- 550 No files found" + "\n")
+                logger("Error: No files in this directory -- 550 No files found, " + self.remoteDirectoryToSync)
             else:
                 raise
         
         return listOfFiles
+
+    def isDirectory(self, objFtp, fileToCheck):
+        try:
+            objFtp.cwd(self.remoteDirectoryToSync + "/" + fileToCheck)
+            isASubDirectory = True
+
+        except Exception as e:
+            isASubDirectory = False
+
+        return isASubDirectory
 
     def checkForDirectories(self, objFtp, fileToScan):
         hasSubDirectories = False
@@ -96,29 +108,8 @@ class FileSyncer:
 
         return hasSubDirectories
 
-    def downloadFolder(self, objFtp, folderToScan):
-        fileNames = []
-        
-        try:
-            self.createLocalDirectory(folderToScan)
-            objFtp.cwd(self.remoteDirectoryToSync + "/" + folderToScan)
-            objFtp.retrlines('NLST', fileNames.append)
-            
-            for f in fileNames:
-
-                if(self.isDirectory(objFtp, f)):
-                    self.subScans += 1
-                    if(self.checkForDirectories(objFtp, f) == True):
-                        print("i am here too downloading a # of scans: " + str(self.subScans))
-                        self.downloadFolder(objFtp, f)
-                    else:
-                        print("i am here again doing something else")
-                else:
-                    print("i am here downloading a single file")
-                    self.downloadFile(objFtp, folderToScan, f)
-        
-        except Exception as e:
-            logger("Folder scan exception: " + str(e))
+    def findMissingFiles(self, localList, remoteList):
+        return [i for i in remoteList if i not in localList]
 
     def downloadFile(self, objFtp, destinationFolder, fileToDownload):
         try:
@@ -131,41 +122,68 @@ class FileSyncer:
 
         except Exception as e:
             logger("Failed file download:" + fileToDownload)
-        
 
-    def isDirectory(self, objFtp, fileToCheck):
+    def createLocalDirectory(self, folderToCreate):
         try:
-            objFtp.cwd(self.remoteDirectoryToSync + "/" + fileToCheck)
-            isASubDirectory = True
+            if(os.path.isdir(self.localDirectoryToSync + "/" + folderToCreate) == False):
+                os.mkdir(self.localDirectoryToSync + "/" + folderToCreate)
+            else:
+                logger("Unable to create directory: " + self.localDirectoryToSync + "/" + folderToCreate + " already exists.\n")
 
         except Exception as e:
-            isASubDirectory = False
+            logger("Error creating local directory: " + e)
 
-        return isASubDirectory
-
-    def downloadMissingFiles(self, missingFiles):
-        logger("Beginning Downloads at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M") + "\n")
+    def appendDownloadQueue(self, listOfRemoteFiles):
         try:
-            ftp = self.createFtpConnection()
-            ftp.cwd(self.remoteDirectoryToSync)
+            if(os.path.isdir("PendingDownloadQueue") == False):
+                os.mkdir("PendingDownloadQueue")
 
-            for f in missingFiles:
-                fileNames = []
-                ftp.cwd(self.remoteDirectoryToSync + "/" + f)
-                ftp.retrlines('NLST', fileNames.append)
-                self.downloadFolder(ftp, f)
+            try:
+                for singleFile in listOfRemoteFiles:
+                    f = open("PendingDownloadQueue/" + singleFile + ".txt", "w")
+                    f.write(json.dumps(singleFile))
+                    f.close
+            except Exception as e:
+                logger("Error - Unable to write datafile: " + str(e))
+
         except Exception as e:
-            logger("Exception: " + str(e))
+            logger("Error - Unable to create download queue folder: " + str(e))
 
-        self.closeFtpConnection(ftp)
+        self.appendSingleDownloadFile("True.Blood.S07E02.HDTV.x264-KILLERS.txt", {"Directory": "Blah","File": "blah.txt","File": "blah2.txt"})
+
+    def appendSingleDownloadFile(self, itemToAppend, listOfSubItems):
+        try:
+
+            if(os.path.isfile("PendingDownloadQueue/" + itemToAppend)):
+                with open("PendingDownloadQueue/" + itemToAppend, "r+") as f:
+                    previousContents = json.loads(f.read())
+                    additionalContent = ""
+                    f.seek(0)
+                    
+                    for key in listOfSubItems:
+                        additionalContent += key + ":" + listOfSubItems[key] + ","
+                    # logger(json.dumps(previousContent + "{" + additionalContent + "}", separators=',', ':'))
+                    # ['foo', {'bar': ('baz', None, 1.0, 2)}]
+                    testContent = {"Parent": itemToAppend, "Files": listOfSubItems}
+                    test = json.dumps(testContent, separators=(',', ':'), indent=4)
+                    print test
+                    test2 = json.loads(test)
+                    print test2
+                    # f.write(json.dumps(previousContents + additionalContent))
+            else:
+                logger("Error - Local file: " + itemToAppend + " does not exist, therefore we cannot append it's contents.")
+        except Exception as e:
+            logger("Error - Appending single file and re-encoding: " + str(e))
+
 
 def init():
     FtpConnection = FileSyncer(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
     listOfLocalFolders = FtpConnection.checkLocalFiles()
     listOfRemoteFolders = FtpConnection.checkRemoteFiles()
-    localMissingFiles = FtpConnection.findMissingFiles(listOfLocalFolders, listOfRemoteFolders)
+    missingFiles = FtpConnection.findMissingFiles(listOfLocalFolders, listOfRemoteFolders)
+    FtpConnection.appendDownloadQueue(missingFiles)
     
-    FtpConnection.downloadMissingFiles(localMissingFiles)
+    # FtpConnection.downloadMissingFiles(localMissingFiles)
     # cleanupDownloadsFolder(os.environ["FtpSyncLocalDirectory"])
 
 init()
