@@ -91,13 +91,8 @@ class FileSyncer:
     def checkForDirectories(self, objFtp, fileToScan):
         hasSubDirectories = False
         for singleFile in fileToScan:
-            
             if(self.isDirectory(objFtp, singleFile) == True): #We have a sub directory
-                # self.createLocalDirectory(singleFile)
                 hasSubDirectories = True
-            else: #We do not have a sub directory
-                self.createLocalDirectory(destinationFolder)
-                self.downloadFile(objFtp, f, singleFile)
 
         return hasSubDirectories
 
