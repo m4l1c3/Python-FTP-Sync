@@ -49,8 +49,9 @@ class FileSyncer:
         
         if os.listdir("PendingDownloadQueue"):
             for f in os.listdir("PendingDownloadQueue"):
-                listOfFiles.append(f[f.rfind("."):])
-
+                if(not f.startswith(".")):
+                    listOfFiles.append(f[:f.rfind(".txt")])
+                    
         return listOfFiles
     
     def CheckRemoteFolders(self, objFtp):
