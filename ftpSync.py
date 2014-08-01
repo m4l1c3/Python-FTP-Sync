@@ -63,10 +63,16 @@ class FileSyncer:
         objFtp.close()
 
     def checkLocalFiles(self):
-        if(os.path.isdir(os.environ["FtpSyncLocalDirectory"])):
-            return [d for d in os.listdir(os.environ["FtpSyncLocalDirectory"]) if os.path.isdir(os.environ["FtpSyncLocalDirectory"])]
-        else:
-            logger("Error - Unable to find local files at " + os.environ["FtpSyncLocalDirectory"] + ": " + e)
+        listOfFiles = []
+
+        if not os.path.isdir("PendingDownloadQueue"):
+            os.mkdir("PendingDownloadQueue")
+        
+        if os.listdir("PendingDownloadQueue"):
+            for f in os.listdir("PendingDownloadQueue"):
+                listOfFiles.append(f[f.rfind("."):])
+
+        return listOfFiles
     
     def checkRemoteFiles(self):
         listOfFiles = []
@@ -155,7 +161,7 @@ class FileSyncer:
                     directory = {}
                     directory[self.remoteDirectoryToSync + "/" + singleFile] = self.getChildItems(ftp, singleFile)
                     
-                    with open("PendingDownloadQueue/download-" + singleFile + ".txt", "w") as f:
+                    with open("PendingDownloadQueue/" + singleFile + ".txt", "w") as f:
                         f.write(json.dumps(directory, separators=(',', ':'), indent=4))
                     
                 self.closeFtpConnection(ftp)
@@ -172,7 +178,7 @@ def init():
     listOfRemoteFolders = FtpConnection.checkRemoteFiles()
     missingFiles = FtpConnection.findMissingFiles(listOfLocalFolders, listOfRemoteFolders)
     FtpConnection.appendDownloadQueue(missingFiles)
-    
+
     # FtpConnection.downloadMissingFiles(localMissingFiles)
     # cleanupDownloadsFolder(os.environ["FtpSyncLocalDirectory"])
 
