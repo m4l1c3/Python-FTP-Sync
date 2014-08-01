@@ -161,7 +161,7 @@ class FileSyncer:
                     with open("PendingDownloadQueue/" + singleFile + ".txt", "w") as f:
                         f.write(json.dumps(directory, separators=(',', ':'), indent=4))
                     
-                self.CloseFtpConnection(ftp)
+                self.CloseFtpConnection(objFtp)
 
             except Exception as e:
                 logger("Error - Unable to write datafile: " + str(e))
