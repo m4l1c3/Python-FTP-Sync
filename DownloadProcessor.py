@@ -28,5 +28,16 @@ class DownloadProcessor():
 		return
 
 	def ProcessDownloadFile(self, fileToProcess):
+        # try:
+        #     objFtp.sendcmd("TYPE i")
+        #     logger("Status - Downloading file: " + fileToDownload + " " + str(objFtp.size(fileToDownload) / 1024 / 1024) + "MB\n")
+        #     file = open(fileToDownload, 'wb')
+        #     objFtp.retrbinary('RETR '+ fileToDownload, file.write)
+        #     file.close()
+        #     logger("Status - Download successful: " + fileToDownload)
+        #     self.moveFile(fileToDownload, destinationFolder)
+
+        # except Exception as e:
+        #     logger("Error - Failed file download file: " + fileToDownload)
 		return
 
