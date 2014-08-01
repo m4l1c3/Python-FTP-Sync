@@ -68,16 +68,12 @@ class FileSyncer:
         else:
             logger("Error - Unable to find local files at " + os.environ["FtpSyncLocalDirectory"] + ": " + e)
     
-    def changeWorkingDirectory(self, objFtp, directoryToChangeTo):
-        self.currentWorkingDirectory = directoryToChangeTo
-        objFtp.cwd(directoryToChangeTo)
-
     def checkRemoteFiles(self):
         listOfFiles = []
 
         try:
             ftp = self.createFtpConnection()
-            self.changeWorkingDirectory(ftp, self.remoteDirectoryToSync)
+            ftp.cwd(self.remoteDirectoryToSync)
             logger("Status - Creating Remote File List")
             ftp.retrlines('NLST', listOfFiles.append)
 
