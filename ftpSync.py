@@ -11,27 +11,6 @@ def logger(message):
     logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
     logging.debug(message)
 
-class DirectoryTree:
-    directories = {}
-
-    def __init__(self):
-        self.directories = {}
-
-class Directory():
-    name = "";
-    folders = []
-    files = []
-
-    def __init__(self, name, files = []):
-        self.name = name
-        self.files = files
-
-class File():
-    name = ""
-
-    def __init__(self, name):
-        self.name = name
-
 class FileSyncer:
     ftpConnection = None
     ftpUser = ""
