@@ -51,7 +51,7 @@ class FileSyncer:
             for f in os.listdir("PendingDownloadQueue"):
                 if(not f.startswith(".")):
                     listOfFiles.append(f[:f.rfind(".txt")])
-                    
+
         return listOfFiles
     
     def CheckRemoteFolders(self, objFtp):
@@ -72,19 +72,6 @@ class FileSyncer:
 
     def FindMissingFolderss(self, localList, remoteList):
         return [i for i in remoteList if i not in localList]
-
-    def DownloadFile(self, objFtp, destinationFolder, fileToDownload):
-        try:
-            objFtp.sendcmd("TYPE i")
-            logger("Status - Downloading file: " + fileToDownload + " " + str(objFtp.size(fileToDownload) / 1024 / 1024) + "MB\n")
-            file = open(fileToDownload, 'wb')
-            objFtp.retrbinary('RETR '+ fileToDownload, file.write)
-            file.close()
-            logger("Status - Download successful: " + fileToDownload)
-            self.moveFile(fileToDownload, destinationFolder)
-
-        except Exception as e:
-            logger("Error - Failed file download file: " + fileToDownload)
 
     def createLocalDirectory(self, folderToCreate):
         try:
@@ -156,8 +143,5 @@ def init():
     listOfRemoteFolders = FtpConnection.CheckRemoteFolders(objFtp)
     missingFiles = FtpConnection.FindMissingFolderss(listOfLocalFolders, listOfRemoteFolders)
     FtpConnection.appendDownloadQueue(objFtp, missingFiles)
-
-    # FtpConnection.downloadMissingFiles(localMissingFiles)
-    # cleanupDownloadsFolder(os.environ["FtpSyncLocalDirectory"])
 
 init()
