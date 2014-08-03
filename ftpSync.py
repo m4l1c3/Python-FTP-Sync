@@ -145,7 +145,6 @@ class FileSyncer:
         except Exception as e:
             logger("Error - Unable to create download queue folder: " + str(e))
 
-
 def init():
     ftp_connection = FileSyncer(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
     obj_ftp = ftp_connection.create_ftp_connection()
