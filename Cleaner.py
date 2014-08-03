@@ -9,7 +9,7 @@ class Cleaner:
     removalRegEx = ""
     file_list = []
 
-    def __init__(self, path_to_clean, type_of_removal, removal_regex="", file_list=[]):
+    def __init__(self, path_to_clean, type_of_removal, file_list=[], removal_regex=""):
         self.pathToClean = path_to_clean
         self.typeOfRemoval = type_of_removal
         self.fileList = file_list
@@ -19,15 +19,22 @@ class Cleaner:
 
     def remove(self):
         if self.is_regex():
-            return
+            for f in os.listdir(self.pathToClean):
+                if self.removalRegEx.search(f):
+                    self.remove_single_file(self.pathToClean + "/" + f)
         elif self.is_tree:
-            return
-        elif self.is_single_file:
-            return
+            shutil.rmtree(self.pathToClean)
+        elif self.is_a_file:
+            for f in self.file_list:
+                self.remove_single_file(self.pathToClean + "/" + f)
         else:
-            os.remove()
-            shutil.rmtree()
-            return
+            return False
+
+    def remove_single_file(self, file_to_remove):
+        try:
+            os.remove(file_to_remove)
+        except OSError as e:
+            print("Error - Problem removing: " + file_to_remove + ", " + str(e))
 
     def is_regex(self):
         if type(self.removalRegEx) is "<class '_sre.SRE_Pattern'>":
@@ -35,8 +42,9 @@ class Cleaner:
         else:
             return False
 
-    def is_single_file(self):
-        if self.typeOfRemoval == "file":
+    @property
+    def is_a_file(self):
+        if len(self.file_list) > 1:
             return True
         else:
             return False
