@@ -101,6 +101,7 @@ class FileSyncer:
 
         try:
             obj_ftp.cwd(self.remoteDirectoryToSync + "/" + file_to_scan)
+            obj_ftp.retrlines('LIST', files.append)
 
             for f in files:
                 index = check_for_directory_reg_ex.search(f)
