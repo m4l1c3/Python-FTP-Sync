@@ -3,3 +3,4 @@
 *.pyc
 /Logs
 /PendingDownloadQueue
+.idea

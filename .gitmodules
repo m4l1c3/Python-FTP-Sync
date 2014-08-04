@@ -1,0 +1,3 @@
+[submodule "rarfile"]
+	path = rarfile
+	url = https://github.com/markokr/rarfile.git
