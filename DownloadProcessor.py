@@ -1,5 +1,8 @@
-import time
-import FtpSync
+#!/Library/Frameworks/Python.framework/Versions/3.4/bin python3
+
+import time, json, shutil, os
+
+from FtpSync import FileSyncer
 
 class ThreadManager():
 	threads = []
@@ -15,20 +18,33 @@ class ThreadManager():
 class DownloadProcessor():
 	timeOut = 60 * 60
 	DownloadQueue = ""
-	ThreadManager = ThreadManager(10)
+	ftpSync = None
 
 	def __init__(self, localDownloadQueue):
 		self.DownloadQueue = localDownloadQueue
 		self.DownloadFolderAndFiles()
+		self.ftpSync = FtpSync()
 
 	def CreateThread(self):
 		self.ThreadManager.CreateThread(thread)
 
+	def MoveFilesIntoProcessing(self):
+		if not os.path.isdir("ProcessingFiles"):
+			os.mkdir("ProcessingFiles")
+
+		if os.listdir("PendingDownloadQueue"):
+			shutil.move(os.listdir("PendingDownloadQueue")[0], "ProcessingFiles")
+
 	def DownloadFolderAndFiles(self):
-		return
+		for f in os.listdir("PendingDownloadQueue"):
+			self.MoveFilesIntoProcessing()
 
 	def ProcessDownloadFile(self, fileToProcess):
-        # try:
+		try:
+			with open("PendingDownloadQueue/" + fileToProcess + ".txt", "r") as downloadFile:
+				downloadData = json.loads(downloadFile.read())
+				print(downloadData)
+
         #     objFtp.sendcmd("TYPE i")
         #     logger("Status - Downloading file: " + fileToDownload + " " + str(objFtp.size(fileToDownload) / 1024 / 1024) + "MB\n")
         #     file = open(fileToDownload, 'wb')
@@ -37,7 +53,6 @@ class DownloadProcessor():
         #     logger("Status - Download successful: " + fileToDownload)
         #     self.moveFile(fileToDownload, destinationFolder)
 
-        # except Exception as e:
-        #     logger("Error - Failed file download file: " + fileToDownload)
-		return
+		except Exception as e:
+			logger("Error - Failed file download file: " + fileToDownload)
 

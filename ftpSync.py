@@ -1,4 +1,6 @@
-import os, subprocess, re, shutil, logging, datetime, json
+#!/Library/Frameworks/Python.framework/Versions/3.4/bin python3
+
+import os, subprocess, re, logging, datetime, json
 
 from ftplib import FTP
 from timeit import timeit
