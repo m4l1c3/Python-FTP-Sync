@@ -4,6 +4,7 @@ import re
 import logging
 import datetime
 import json
+import sys
 
 from ftplib import FTP
 
@@ -27,6 +28,7 @@ class FileSyncer:
     localDirectoryToSync = ""
     subScans = 0
     currentWorkingDirectory = ""
+    remoteDirectoryTree = {}
 
     def __init__(self, server, user, password, port, remote_directory, local_directory):
         self.ftpServer = server
@@ -92,9 +94,9 @@ class FileSyncer:
         except Exception as e:
             logger("Error - creating local directory: " + str(e))
 
-    def get_child_items(self, obj_ftp, file_to_scan):
+    def get_directory_structure(self, obj_ftp, file_to_scan):
+        logger("Status - Checking: " + file_to_scan + " for files and folders")
         check_for_directory_reg_ex = re.compile("\d")
-        directory_files = []
         directory_directories = []
         files = []
         child_items = {}
@@ -102,8 +104,10 @@ class FileSyncer:
         try:
             obj_ftp.cwd(self.remoteDirectoryToSync + "/" + file_to_scan)
             obj_ftp.retrlines('LIST', files.append)
-
+            self.remoteDirectoryTree[obj_ftp.pwd()] = []
+            
             for f in files:
+                
                 index = check_for_directory_reg_ex.search(f)
                 file_or_directory_name = f[f.rfind(" "):].strip()
 
@@ -112,18 +116,33 @@ class FileSyncer:
                     directory_directories.append(file_or_directory_name)
                 else:
                     #we do not have a directory
-                    directory_files.append(file_or_directory_name)
+                    continue
 
         except Exception as e:
             logger("Error - An error has occured checking for child items: " + str(e))
 
-        child_items["Directories"] = directory_directories
-        child_items["Files"] = directory_files
+        if directory_directories:
+            for dir in directory_directories:
+                self.get_directory_structure(obj_ftp, file_to_scan + "/" + dir)
+        
+        child_items["Files"] = self.remoteDirectoryTree
 
-        if child_items["Directories"]:
-            for dir in child_items["Directories"]:
-                child_items["Files"].append("'" + file_to_scan + "/" + dir + "':" +
-                                            str(self.get_child_items(obj_ftp, file_to_scan + "/" + dir)))
+        for directory in child_items["Files"]:
+            directory_files = []
+            current_folder_files = []
+            obj_ftp.cwd(directory)
+            obj_ftp.retrlines('LIST', current_folder_files.append)
+            
+            for f in current_folder_files:
+                
+                index = check_for_directory_reg_ex.search(f)
+                file_name = f[f.rfind(" "):].strip()
+
+                if int(f[index.start()]) <= 1:
+                    #we have a file
+                    directory_files.append(file_name)
+
+            child_items["Files"][directory] = directory_files
 
         return child_items
 
@@ -135,7 +154,7 @@ class FileSyncer:
             try:
                 for singleFile in list_of_remote_files:
                     directory = {}
-                    directory[self.remoteDirectoryToSync + "/" + singleFile] = self.get_child_items(obj_ftp, singleFile)
+                    directory[self.remoteDirectoryToSync + "/" + singleFile] = self.get_directory_structure(obj_ftp, singleFile)
 
                     with open("PendingDownloadQueue/" + singleFile + ".txt", "w") as f:
                         f.write(json.dumps(directory, separators=(',', ':'), indent=4))
