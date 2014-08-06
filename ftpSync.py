@@ -5,6 +5,7 @@ import logging
 import datetime
 import json
 import sys
+import operator
 
 from ftplib import FTP
 
@@ -29,6 +30,7 @@ class FileSyncer:
     subScans = 0
     currentWorkingDirectory = ""
     remoteDirectoryTree = {}
+    check_for_directory_reg_ex = re.compile("\d")
 
     def __init__(self, server, user, password, port, remote_directory, local_directory):
         self.ftpServer = server
@@ -96,7 +98,7 @@ class FileSyncer:
 
     def get_directory_structure(self, obj_ftp, file_to_scan):
         logger("Status - Checking: " + file_to_scan + " for files and folders")
-        check_for_directory_reg_ex = re.compile("\d")
+
         directory_directories = []
         files = []
         child_items = {}
@@ -105,10 +107,9 @@ class FileSyncer:
             obj_ftp.cwd(self.remoteDirectoryToSync + "/" + file_to_scan)
             obj_ftp.retrlines('LIST', files.append)
             self.remoteDirectoryTree[obj_ftp.pwd()] = []
-            
+
             for f in files:
-                
-                index = check_for_directory_reg_ex.search(f)
+                index = self.check_for_directory_reg_ex.search(f)
                 file_or_directory_name = f[f.rfind(" "):].strip()
 
                 if int(f[index.start()]) > 1:
@@ -124,40 +125,43 @@ class FileSyncer:
         if directory_directories:
             for dir in directory_directories:
                 self.get_directory_structure(obj_ftp, file_to_scan + "/" + dir)
-        
+
         child_items["Files"] = self.remoteDirectoryTree
 
-        for directory in child_items["Files"]:
+        return child_items
+
+    def find_folder_files(self, obj_ftp, list_of_directories):
+        print(list_of_directories)
+        for directory in list_of_directories:
             directory_files = []
             current_folder_files = []
             obj_ftp.cwd(directory)
             obj_ftp.retrlines('LIST', current_folder_files.append)
-            
+
             for f in current_folder_files:
-                
-                index = check_for_directory_reg_ex.search(f)
+
+                index = self.check_for_directory_reg_ex.search(f)
                 file_name = f[f.rfind(" "):].strip()
 
                 if int(f[index.start()]) <= 1:
                     #we have a file
                     directory_files.append(file_name)
 
-            child_items["Files"][directory] = directory_files
-
-        return child_items
+        # child_items["Files"][directory] = directory_files
 
     def append_download_queue(self, obj_ftp, list_of_remote_files):
         try:
-            if(os.path.isdir("PendingDownloadQueue") == False):
+            if not os.path.isdir("PendingDownloadQueue"):
                 os.mkdir("PendingDownloadQueue")
 
             try:
                 for singleFile in list_of_remote_files:
                     directory = {}
-                    directory[self.remoteDirectoryToSync + "/" + singleFile] = self.get_directory_structure(obj_ftp, singleFile)
-
-                    with open("PendingDownloadQueue/" + singleFile + ".txt", "w") as f:
-                        f.write(json.dumps(directory, separators=(',', ':'), indent=4))
+                    # directory[self.remoteDirectoryToSync + "/" + singleFile] = self.get_directory_structure(obj_ftp, singleFile)
+                    print(self.get_directory_structure(obj_ftp, singleFile))
+                    print()
+                    # with open("PendingDownloadQueue/" + singleFile + ".txt", "w") as f:
+                    #     f.write(json.dumps(directory[self.remoteDirectoryToSync + "/" + singleFile], separators=(',', ':'), indent=4))
 
                 self.close_ftp_connection(obj_ftp)
 
