@@ -56,11 +56,12 @@ class DownloadProcessor():
         # try:
         with open("ProcessingFiles/" + file_to_process, "r") as download_file:
             download_data = json.loads(download_file.read())
-            for f in download_data:
-                for fi in download_data[f]:
-                    #we need to create all the random directories
-                    if fi == "Directories":
-                        self.map_download_directories(f.replace(os.environ["FtpSyncRemoteDirectory"], ""), download_data[f][fi])
+            for f in download_data["Files"]:
+                self.map_download_directories(f.replace(os.environ["FtpSyncRemoteDirectory"], ""), f)
+                # for fi in download_data[f]:
+                #     #we need to create all the random directories
+                #     if fi == "Directories":
+                #
 
                         #self.map_download_directories(f.replace(str(),  ""), fi)
                     #we need to download all the random files into the appropriate directories
