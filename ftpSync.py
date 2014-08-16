@@ -50,8 +50,7 @@ class FileSyncer:
         logger("Status - Closing FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
         obj_ftp.close()
 
-    @staticmethod
-    def check_local_folders():
+    def check_local_folders(self):
         list_of_files = []
 
         if not os.path.isdir("PendingDownloadQueue"):
@@ -61,6 +60,10 @@ class FileSyncer:
             for f in os.listdir("PendingDownloadQueue"):
                 if not f.startswith("."):
                     list_of_files.append(f[:f.rfind(".txt")])
+
+        if os.listdir(self.localDirectoryToSync):
+            for f in os.listdir(self.localDirectoryToSync):
+                list_of_files.append(f)
 
         return list_of_files
 
@@ -85,10 +88,10 @@ class FileSyncer:
 
     def create_local_directory(self, folder_to_create):
         try:
-            if not os.path.isdir(self.localDirectoryToSync + "/" + folder_to_create):
-                os.mkdir(self.localDirectoryToSync + "/" + folder_to_create)
+            if not os.path.isdir(self.localDirectoryToSync + self.directory_separator + folder_to_create):
+                os.mkdir(self.localDirectoryToSync + self.directory_separator + folder_to_create)
             else:
-                logger("Status - Directory: " + self.localDirectoryToSync + "/" + folder_to_create
+                logger("Status - Directory: " + self.localDirectoryToSync + self.directory_separator + folder_to_create
                        + " already exists.\n")
 
         except Exception as e:
@@ -102,7 +105,7 @@ class FileSyncer:
         child_items = {}
 
         try:
-            obj_ftp.cwd(self.remoteDirectoryToSync + "/" + file_to_scan)
+            obj_ftp.cwd(self.remoteDirectoryToSync + self.directory_separator + file_to_scan)
             obj_ftp.retrlines('LIST', files.append)
             self.remoteDirectoryTree[obj_ftp.pwd()] = []
             
@@ -123,7 +126,7 @@ class FileSyncer:
 
         if directory_directories:
             for dir in directory_directories:
-                self.get_directory_structure(obj_ftp, file_to_scan + "/" + dir)
+                self.get_directory_structure(obj_ftp, file_to_scan + self.directory_separator + dir)
         
         child_items["Files"] = self.remoteDirectoryTree
 
@@ -154,7 +157,7 @@ class FileSyncer:
             try:
                 for singleFile in list_of_remote_files:
                     directory = {}
-                    directory[self.remoteDirectoryToSync + "/" + singleFile] = self.get_directory_structure(obj_ftp, singleFile)
+                    directory[self.remoteDirectoryToSync + self.directory_separator + singleFile] = self.get_directory_structure(obj_ftp, singleFile)
 
                     with open("PendingDownloadQueue/" + singleFile + ".txt", "w") as f:
                         f.write(json.dumps(directory, separators=(',', ':'), indent=4))
