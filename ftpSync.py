@@ -10,6 +10,7 @@ import operator
 from ftplib import FTP
 
 
+
 def logger(message):
     if os.path.isdir("Logs") == False:
         os.mkdir("Logs")
