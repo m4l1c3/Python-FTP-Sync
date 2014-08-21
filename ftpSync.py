@@ -4,8 +4,6 @@ import re
 import logging
 import datetime
 import json
-import sys
-import operator
 
 from ftplib import FTP
 from Base import Base
