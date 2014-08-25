@@ -6,28 +6,29 @@ import os
 import sys
 
 from ftpSync import FileSyncer
+from Base import Base
 
-
-class DownloadProcessor():
+class DownloadProcessor(Base):
     timeOut = 60 * 60
-    DownloadQueue = ""
-    ftpSync = None
+    download_queue = ""
+    ftp_sync = None
 
     def __init__(self, localDownloadQueue):
-        self.DownloadQueue = localDownloadQueue
+        Base.__init__(self)
+        self.download_queue = localDownloadQueue
         self.move_file_into_processing()
-        self.ftpSync = FileSyncer(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
+        self.ftp_sync = FileSyncer(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
 
 
     def move_file_into_processing(self):
         if not os.path.isdir("ProcessingFiles"):
             os.mkdir("ProcessingFiles")
 
-        files_to_process = [f for f in os.listdir("PendingDownloadQueue") if f.endswith(".txt")]
+        files_to_process = [f for f in os.listdir(self.download_queue) if f.endswith(".txt")]
 
         if files_to_process:
             try:
-                shutil.move("PendingDownloadQueue/" + files_to_process[0], "ProcessingFiles")
+                shutil.move("PendingDownloadQueue" + self.directory_separator + files_to_process[0], "ProcessingFiles")
                 self.process_download_file(files_to_process[0])
             except OSError as e:
                 print("Error - Unable to move: " + files_to_process[0] + " into queue.")
@@ -42,20 +43,20 @@ class DownloadProcessor():
         if not os.path.isdir("FailedFiles"):
             os.mkdir("FailedFiles")
         try:
-            shutil.move("PendingDownloadQueue/" + failed_file, "FailedFiles")
+            shutil.move("PendingDownloadQueue" + self.directory_separator + failed_file, "FailedFiles")
 
         except OSError as e:
             print("Error moving: " + failed_file + " into failed folder.")
 
     def map_download_directories(self, parent_directory, mapped_directory_data=""):
-        os.mkdir(os.environ["FtpSyncLocalDirectory"] + "/" + parent_directory)
+        os.mkdir(os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory)
 
         if mapped_directory_data:
             for directory in mapped_directory_data:
-                os.mkdir(os.environ["FtpSyncLocalDirectory"] + parent_directory + "/" + directory)
+                os.mkdir(os.environ["FtpSyncLocalDirectory"] + parent_directory + self.directory_separator + directory)
 
     def process_download_file(self, file_to_process):
-        with open("ProcessingFiles/" + file_to_process, "r") as download_file:
+        with open("ProcessingFiles" + self.directory_separator + file_to_process, "r") as download_file:
             try:
                 download_data = json.loads(download_file.read())
                 for f in download_data["Files"]:
