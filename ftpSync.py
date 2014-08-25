@@ -1,21 +1,11 @@
 #!/Library/Frameworks/Python.framework/Versions/3.4/bin python3
 import os
 import re
-import logging
 import datetime
 import json
 
 from ftplib import FTP
 from Base import Base
-
-
-def logger(message):
-    if os.path.isdir("Logs") == False:
-        os.mkdir("Logs")
-
-    log_filename = "Logs/" + datetime.datetime.now().strftime("%Y-%m-%d") + ".log"
-    logging.basicConfig(filename=log_filename, level=logging.DEBUG)
-    logging.debug(message)
 
 
 class FileSyncer(Base):
@@ -39,6 +29,7 @@ class FileSyncer(Base):
         self.ftpPort = port
         self.remoteDirectoryToSync = remote_directory
         self.localDirectoryToSync = local_directory
+        self.synchronize()
 
     def create_ftp_connection(self):
         logger("Status - Opening FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
@@ -108,7 +99,7 @@ class FileSyncer(Base):
         child_items = {}
 
         try:
-            obj_ftp.cwd(self.remoteDirectoryToSync + "/" + file_to_scan)
+            obj_ftp.cwd(self.remoteDirectoryToSync + self.directory_separator + file_to_scan)
             obj_ftp.retrlines('LIST', files.append)
             self.remoteDirectoryTree[obj_ftp.pwd()] = []
 
@@ -151,7 +142,7 @@ class FileSyncer(Base):
                 for singleFile in list_of_remote_files:
                     self.remoteDirectoryTree = {}
 
-                    with open("PendingDownloadQueue/" + singleFile + ".txt", "w") as f:
+                    with open("PendingDownloadQueue" + self.directory_separator + singleFile + ".txt", "w") as f:
                         f.write(json.dumps(self.get_directory_structure(obj_ftp, singleFile), separators=(',', ':'), indent=4))
 
                 self.close_ftp_connection(obj_ftp)
@@ -162,12 +153,9 @@ class FileSyncer(Base):
         except Exception as e:
             logger("Error - Unable to create download queue folder: " + str(e))
 
-def init():
-    ftp_connection = FileSyncer(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
-    obj_ftp = ftp_connection.create_ftp_connection()
-    list_of_local_folders = ftp_connection.check_local_folders()
-    list_of_remote_folders = ftp_connection.check_remote_folders(obj_ftp)
-    missing_files = ftp_connection.find_missing_folders(list_of_local_folders, list_of_remote_folders)
-    ftp_connection.append_download_queue(obj_ftp, missing_files)
-
-init()
+    def synchronize(self):
+        obj_ftp = self.create_ftp_connection()
+        list_of_local_folders = self.check_local_folders()
+        list_of_remote_folders = self.check_remote_folders(obj_ftp)
+        missing_files = self.find_missing_folders(list_of_local_folders, list_of_remote_folders)
+        self.append_download_queue(obj_ftp, missing_files)
