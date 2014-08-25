@@ -79,4 +79,4 @@ class DownloadProcessor(Base):
                 # logger("Status - Download successful: " + fileToDownload)
                 # self.moveFile(fileToDownload, destinationFolder)
 
-processor = DownloadProcessor("/Users/jwisdom/Dev/Workspace/GitRepos/PendingDownloadQueue")
+processor = DownloadProcessor("/Users/jonwisdom/Dev/Workspace/Python-FTP-Sync/PendingDownloadQueue")
