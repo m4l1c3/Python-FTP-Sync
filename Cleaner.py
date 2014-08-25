@@ -2,14 +2,17 @@ import os
 import re
 import shutil
 
+from Base import Base
 
-class Cleaner:
+
+class Cleaner(Base):
     pathToClean = ""
     typeOfRemoval = ""
     removalRegEx = ""
     file_list = []
 
     def __init__(self, path_to_clean, type_of_removal, file_list=[], removal_regex=""):
+        Base.__init__(self)
         self.pathToClean = path_to_clean
         self.typeOfRemoval = type_of_removal
         self.fileList = file_list
@@ -21,12 +24,12 @@ class Cleaner:
         if self.is_regex():
             for f in os.listdir(self.pathToClean):
                 if self.removalRegEx.search(f):
-                    self.remove_single_file(self.pathToClean + "/" + f)
+                    self.remove_single_file(self.pathToClean + self.directory_separator + f)
         elif self.is_tree:
             shutil.rmtree(self.pathToClean)
         elif self.is_a_file:
             for f in self.file_list:
-                self.remove_single_file(self.pathToClean + "/" + f)
+                self.remove_single_file(self.pathToClean + self.directory_separator + f)
         else:
             return False
 
