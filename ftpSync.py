@@ -17,7 +17,6 @@ class FileSyncer(Base):
     ftpPort = 21
     remoteDirectoryToSync = ""
     localDirectoryToSync = ""
-    subScans = 0
     currentWorkingDirectory = ""
     remoteDirectoryTree = {}
     check_for_directory_reg_ex = re.compile("\d")
