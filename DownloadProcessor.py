@@ -16,27 +16,33 @@ class DownloadProcessor(Base):
     def __init__(self, localDownloadQueue):
         Base.__init__(self)
         self.download_queue = localDownloadQueue
-        self.move_file_into_processing()
         self.ftp_sync = FileSyncer(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
-
+        self.move_file_into_processing()
 
     def move_file_into_processing(self):
         if not os.path.isdir("ProcessingFiles"):
             os.mkdir("ProcessingFiles")
 
+        processing_files = [f for f in os.listdir("ProcessingFiles") if f.endswith(".txt")]
         files_to_process = [f for f in os.listdir(self.download_queue) if f.endswith(".txt")]
 
-        if files_to_process:
+        if not processing_files and files_to_process:
             try:
                 shutil.move("PendingDownloadQueue" + self.directory_separator + files_to_process[0], "ProcessingFiles")
                 self.process_download_file(files_to_process[0])
             except OSError as e:
-                print("Error - Unable to move: " + files_to_process[0] + " into queue.")
-                try:
-                    self.move_file_into_failed(files_to_process[0])
-                except OSError as e:
-                    print("Error - Unable to move failed file: " + files_to_process[0] + " into failed queue.")
+                print("Error - Unable to move: " + files_to_process[0] + " into queue.  " + str(e))
+                self.move_file_into_failed(files_to_process[0])
             finally:
+                files_to_process.remove(files_to_process[0])
+                self.move_file_into_processing()
+        elif processing_files:
+            try:
+                self.process_download_file(processing_files[0])
+            except Exception as e:
+                print("Error - Unable to process: " + processing_files[0] + " " + str(e))
+            finally:
+                processing_files.remove(processing_files[0])
                 self.move_file_into_processing()
 
     def move_file_into_failed(self, failed_file):
@@ -44,16 +50,19 @@ class DownloadProcessor(Base):
             os.mkdir("FailedFiles")
         try:
             shutil.move("PendingDownloadQueue" + self.directory_separator + failed_file, "FailedFiles")
-
         except OSError as e:
             print("Error moving: " + failed_file + " into failed folder.")
 
     def map_download_directories(self, parent_directory, mapped_directory_data=""):
-        os.mkdir(os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory)
-
-        if mapped_directory_data:
-            for directory in mapped_directory_data:
-                os.mkdir(os.environ["FtpSyncLocalDirectory"] + parent_directory + self.directory_separator + directory)
+        if not os.path.isdir(os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory):
+            try:
+                os.mkdir(os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory)
+            except OSError as e:
+                print("Unable to create director: " + os.mkdir(os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory) + " " + str(e))
+            finally:
+                if mapped_directory_data:
+                    for directory in mapped_directory_data:
+                        self.map_download_directories(os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory + self.directory_separator + directory, directory)
 
     def process_download_file(self, file_to_process):
         with open("ProcessingFiles" + self.directory_separator + file_to_process, "r") as download_file:
