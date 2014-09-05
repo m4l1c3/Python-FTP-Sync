@@ -123,7 +123,7 @@ class FileSyncer(Base):
             for dir in directory_directories:
                 self.get_directory_structure(obj_ftp, file_to_scan + self.directory_separator + dir)
 
-        child_items["Files"] = self.remoteDirectoryTree
+        child_items["Files"] = sorted(self.remoteDirectoryTree)
 
         return child_items
 

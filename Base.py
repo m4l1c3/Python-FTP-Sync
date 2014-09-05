@@ -1,5 +1,6 @@
 import platform
 
+
 class Base():
     current_os = ""
     directory_separator = ""
