@@ -58,11 +58,8 @@ class DownloadProcessor(Base):
             try:
                 os.mkdir(os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory)
             except OSError as e:
-                print("Unable to create directory: " + os.mkdir(os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory) + " " + str(e))
-            # finally:
-            #     if mapped_directory_data:
-            #         for directory in mapped_directory_data:
-            #             self.map_download_directories(os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory + self.directory_separator + directory, directory)
+                print("Unable to create directory: " + os.mkdir(os.environ["FtpSyncLocalDirectory"] +
+                        self.directory_separator + parent_directory) + " " + str(e))
 
     def process_download_file(self, file_to_process):
         with open("ProcessingFiles" + self.directory_separator + file_to_process, "r") as download_file:
@@ -70,6 +67,7 @@ class DownloadProcessor(Base):
                 download_data = json.loads(download_file.read())
                 for f in download_data["Files"]:
                     self.map_download_directories(f.replace(os.environ["FtpSyncRemoteDirectory"] + "/", ""))
+                    print(download_data["Files"])
             except Exception as e:
                 print("Error - Unable to download file: " + str(download_file) + ", " + str(e))
                 # for fi in download_data[f]:
@@ -88,4 +86,4 @@ class DownloadProcessor(Base):
                 # logger("Status - Download successful: " + fileToDownload)
                 # self.moveFile(fileToDownload, destinationFolder)
 
-processor = DownloadProcessor("/Users/jwisdom/Dev/Workspace/GitRepos/Python-FTP-Sync/PendingDownloadQueue")
+processor = DownloadProcessor("/Users/jonwisdom/Dev/Workspace/Python-FTP-Sync/PendingDownloadQueue")
