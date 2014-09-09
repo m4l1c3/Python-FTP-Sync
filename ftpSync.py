@@ -123,7 +123,7 @@ class FileSyncer(Base):
             for dir in directory_directories:
                 self.get_directory_structure(obj_ftp, file_to_scan + self.directory_separator + dir)
 
-        child_items["Files"] = sorted(self.remoteDirectoryTree)
+        child_items["Files"] = self.remoteDirectoryTree
 
         return child_items
 
@@ -143,7 +143,7 @@ class FileSyncer(Base):
                     self.remoteDirectoryTree = {}
 
                     with open("PendingDownloadQueue" + self.directory_separator + singleFile + ".txt", "w") as f:
-                        f.write(json.dumps(self.get_directory_structure(obj_ftp, singleFile), separators=(',', ':'), indent=4))
+                        f.write(json.dumps(self.get_directory_structure(obj_ftp, singleFile), separators=(',', ':'), indent=4, sort_keys=True))
 
                 self.close_ftp_connection(obj_ftp)
 
@@ -159,3 +159,7 @@ class FileSyncer(Base):
         list_of_remote_folders = self.check_remote_folders(obj_ftp)
         missing_files = self.find_missing_folders(list_of_local_folders, list_of_remote_folders)
         self.append_download_queue(obj_ftp, missing_files)
+
+fs = FileSyncer(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"],
+                    os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
+
