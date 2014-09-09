@@ -159,7 +159,3 @@ class FileSyncer(Base):
         list_of_remote_folders = self.check_remote_folders(obj_ftp)
         missing_files = self.find_missing_folders(list_of_local_folders, list_of_remote_folders)
         self.append_download_queue(obj_ftp, missing_files)
-
-fs = FileSyncer(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"],
-                    os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
-
