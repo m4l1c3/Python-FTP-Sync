@@ -76,7 +76,8 @@ class FileSyncer(Base):
 
         return list_of_files
 
-    def find_missing_folders(self, local_list, remote_list):
+    @staticmethod
+    def find_missing_folders(local_list, remote_list):
         return [i for i in remote_list if i not in local_list]
 
     def create_local_directory(self, folder_to_create):
@@ -120,14 +121,15 @@ class FileSyncer(Base):
             Logger("Error - An error has occurred checking for child items: " + str(e))
 
         if directory_directories:
-            for dir in directory_directories:
-                self.get_directory_structure(obj_ftp, file_to_scan + self.directory_separator + dir)
+            for d in directory_directories:
+                self.get_directory_structure(obj_ftp, file_to_scan + self.directory_separator + d)
 
         child_items["Files"] = self.remoteDirectoryTree
 
         return child_items
 
-    def find_folder_files(self, obj_ftp, directory_tree, current_directory, directory_files):
+    @staticmethod
+    def find_folder_files(directory_tree, current_directory, directory_files):
 
         directory_tree["Files"][current_directory] = directory_files
 
@@ -143,7 +145,12 @@ class FileSyncer(Base):
                     self.remoteDirectoryTree = {}
 
                     with open("PendingDownloadQueue" + self.directory_separator + singleFile + ".txt", "w") as f:
-                        f.write(json.dumps(self.get_directory_structure(obj_ftp, singleFile), separators=(',', ':'), indent=4, sort_keys=True))
+                        f.write(json.dumps
+                                (
+                                    self.get_directory_structure(obj_ftp, singleFile),
+                                    separators=(',', ':'), indent=4, sort_keys=True
+                                )
+                               )
 
                 self.close_ftp_connection(obj_ftp)
 
