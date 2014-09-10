@@ -28,9 +28,7 @@ class Base():
             return False
 
     def is_osx(self):
-
         if not platform.system() == "Darwin":
-            print("here")
             return True
         else:
             return False
