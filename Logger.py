@@ -9,9 +9,11 @@ class Logger(Base):
 
     def __init__(self, message):
         Base.__init__(self)
+        self.message = message
+        self.log_error()
 
     def log_error(self):
-        if os.path.isdir("Logs") == False:
+        if not os.path.isdir("Logs"):
             os.mkdir("Logs")
 
         log_filename = "Logs" + self.directory_separator + datetime.datetime.now().strftime("%Y-%m-%d") + ".log"
