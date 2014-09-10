@@ -67,7 +67,10 @@ class DownloadProcessor(Base):
                 download_data = json.loads(download_file.read())
                 for f in sorted(download_data["Files"]):
                     self.map_download_directories(f.replace(os.environ["FtpSyncRemoteDirectory"] + "/", ""))
-                    # print(download_data["Files"][f])
+
+                for f in download_data["Files"]:
+                    print("f: " + f + " downloads: " + str(download_data["Files"][f]))
+
             except Exception as e:
                 print("Error - Unable to download file: " + str(download_file) + ", " + str(e))
                 # for fi in download_data[f]:
