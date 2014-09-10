@@ -65,9 +65,9 @@ class DownloadProcessor(Base):
         with open("ProcessingFiles" + self.directory_separator + file_to_process, "r") as download_file:
             try:
                 download_data = json.loads(download_file.read())
-                for f in download_data["Files"]:
+                for f in sorted(download_data["Files"]):
                     self.map_download_directories(f.replace(os.environ["FtpSyncRemoteDirectory"] + "/", ""))
-                    print(download_data["Files"])
+                    # print(download_data["Files"][f])
             except Exception as e:
                 print("Error - Unable to download file: " + str(download_file) + ", " + str(e))
                 # for fi in download_data[f]:
@@ -86,4 +86,4 @@ class DownloadProcessor(Base):
                 # logger("Status - Download successful: " + fileToDownload)
                 # self.moveFile(fileToDownload, destinationFolder)
 
-processor = DownloadProcessor("/Users/jonwisdom/Dev/Workspace/Python-FTP-Sync/PendingDownloadQueue")
+processor = DownloadProcessor("/Users/jwisdom/Dev/Workspace/GitRepos/Python-FTP-Sync/PendingDownloadQueue")

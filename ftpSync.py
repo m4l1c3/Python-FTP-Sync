@@ -49,14 +49,19 @@ class FileSyncer(Base):
         if not os.path.isdir("PendingDownloadQueue"):
             os.mkdir("PendingDownloadQueue")
 
-        if os.listdir("PendingDownloadQueue"):
-            for f in os.listdir("PendingDownloadQueue"):
-                if not f.startswith("."):
-                    list_of_files.append(f[:f.rfind(".txt")])
+        for f in os.listdir("PendingDownloadQueue"):
+            if not f.startswith("."):
+                list_of_files.append(f[:f.rfind(".txt")])
 
-        if os.listdir(self.localDirectoryToSync):
-            for f in os.listdir(self.localDirectoryToSync):
-                list_of_files.append(f)
+        for f in os.listdir(self.localDirectoryToSync):
+            list_of_files.append(f)
+
+        if not os.path.isdir("ProcessingFiles"):
+            os.mkdir("ProcessingFiles")
+
+        for f in os.listdir("ProcessingFiles"):
+            if not f.startswith("."):
+                list_of_files.append(f[:f.rfind(".txt")])
 
         return list_of_files
 
