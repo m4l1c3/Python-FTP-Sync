@@ -6,6 +6,7 @@ import os
 
 from ftpSync import FileSyncer
 from Base import Base
+from Download import Download
 
 class DownloadProcessor(Base):
     timeOut = 60 * 60
@@ -69,22 +70,11 @@ class DownloadProcessor(Base):
                     self.map_download_directories(f.replace(os.environ["FtpSyncRemoteDirectory"] + "/", ""))
 
                 for f in download_data["Files"]:
-                    self.download_file(f, download_data["Files"][f])
+                    Download(self.ftp_sync, f, download_data["Files"][f])
 
             except Exception as e:
                 print("Error - Unable to download file: " + str(download_file) + ", " + str(e))
 
-    def download_file(self, parent_directory, list_of_files):
-        try:
-            obj_ftp = self.ftp_sync.create_ftp_connection()
 
-            for f in list_of_files:
-                obj_ftp.sendcmd("TYPE i")
-                with open(str(f).replace("u'","").replace("'",""), "wb") as download:
-                    obj_ftp.retrbinary("RETR " + parent_directory + self.directory_separator + f, download.write)
-
-                shutil.move(f, os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory.replace(os.environ["FtpSyncRemoteDirectory"], ""))
-        except Exception as e:
-            print("Error downloading: " + str(e))
 
 processor = DownloadProcessor("/Users/jwisdom/Dev/Workspace/GitRepos/Python-FTP-Sync/PendingDownloadQueue")
