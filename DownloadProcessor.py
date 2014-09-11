@@ -16,7 +16,7 @@ class DownloadProcessor(Base):
     def __init__(self, localDownloadQueue):
         Base.__init__(self)
         self.download_queue = localDownloadQueue
-        self.ftp_sync = FileSyncer(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
+        self.ftp_sync = FileSyncer()
         self.move_file_into_processing()
 
     def move_file_into_processing(self):
@@ -44,8 +44,6 @@ class DownloadProcessor(Base):
             finally:
                 os.remove("ProcessingFiles" + self.directory_separator + single_file)
 
-
-
     def move_file_into_failed(self, failed_file):
         if not os.path.isdir("FailedFiles"):
             os.mkdir("FailedFiles")
@@ -55,19 +53,19 @@ class DownloadProcessor(Base):
             print("Error moving: " + failed_file + " into failed folder.")
 
     def map_download_directories(self, parent_directory, mapped_directory_data=""):
-        if not os.path.isdir(os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory):
+        if not os.path.isdir(self.local_directory_to_sync + self.directory_separator + parent_directory):
             try:
-                os.mkdir(os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory)
+                os.mkdir(self.local_directory_to_sync + self.directory_separator + parent_directory)
             except OSError as e:
-                print("Unable to create directory: " + os.mkdir(os.environ["FtpSyncLocalDirectory"] +
-                        self.directory_separator + parent_directory) + " " + str(e))
+                print("Unable to create directory: " + self.local_directory_to_sync +
+                        self.directory_separator + parent_directory + " " + str(e))
 
     def process_download_file(self, file_to_process):
         with open("ProcessingFiles" + self.directory_separator + file_to_process, "r") as download_file:
             try:
                 download_data = json.loads(download_file.read())
                 for f in sorted(download_data["Files"]):
-                    self.map_download_directories(f.replace(os.environ["FtpSyncRemoteDirectory"] + "/", ""))
+                    self.map_download_directories(f.replace(self.remote_directory_to_sync + "/", ""))
 
                 for f in download_data["Files"]:
                     Download(self.ftp_sync, f, download_data["Files"][f])
