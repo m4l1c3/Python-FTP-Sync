@@ -67,7 +67,11 @@ class DownloadProcessor(Base):
                 download_data = json.loads(download_file.read())
                 for f in sorted(download_data["Files"]):
                     self.map_download_directories(f.replace(os.environ["FtpSyncRemoteDirectory"] + "/", ""))
-                    # print(download_data["Files"][f])
+
+                for f in download_data["Files"]:
+                    print("f: " + f + " downloads: " + str(download_data["Files"][f]))
+                    self.download_file(f, download_data["Files"][f])
+
             except Exception as e:
                 print("Error - Unable to download file: " + str(download_file) + ", " + str(e))
                 # for fi in download_data[f]:
@@ -86,4 +90,18 @@ class DownloadProcessor(Base):
                 # logger("Status - Download successful: " + fileToDownload)
                 # self.moveFile(fileToDownload, destinationFolder)
 
+    def download_file(self, parent_directory, list_of_files):
+        try:
+            obj_ftp = self.ftp_sync.create_ftp_connection()
+            obj_ftp.cwd(parent_directory)
+            for f in list_of_files:
+                obj_ftp.sendcmd("TYPE i")
+                with open(f) as download:
+                    obj_ftp.retrbinary("RETR " + f, download.write)
+                print("Successfully downloaded: " + f)
+                shutil.move(f, os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory)
+
+        except Exception as e:
+            print("Error downloading: " + str(e))
+        return
 processor = DownloadProcessor("/Users/jwisdom/Dev/Workspace/GitRepos/Python-FTP-Sync/PendingDownloadQueue")
