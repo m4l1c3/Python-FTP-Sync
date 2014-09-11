@@ -69,39 +69,22 @@ class DownloadProcessor(Base):
                     self.map_download_directories(f.replace(os.environ["FtpSyncRemoteDirectory"] + "/", ""))
 
                 for f in download_data["Files"]:
-                    print("f: " + f + " downloads: " + str(download_data["Files"][f]))
                     self.download_file(f, download_data["Files"][f])
 
             except Exception as e:
                 print("Error - Unable to download file: " + str(download_file) + ", " + str(e))
-                # for fi in download_data[f]:
-                #     #we need to create all the random directories
-                #     if fi == "Directories":
-                #
-
-                        #self.map_download_directories(f.replace(str(),  ""), fi)
-                    #we need to download all the random files into the appropriate directories
-
-                # objFtp.sendcmd("TYPE i")
-                # logger("Status - Downloading file: " + fileToDownload + " " + str(objFtp.size(fileToDownload) / 1024 / 1024) + "MB\n")
-                # file = open(fileToDownload, 'wb')
-                # objFtp.retrbinary('RETR '+ fileToDownload, file.write)
-                # file.close()
-                # logger("Status - Download successful: " + fileToDownload)
-                # self.moveFile(fileToDownload, destinationFolder)
 
     def download_file(self, parent_directory, list_of_files):
         try:
             obj_ftp = self.ftp_sync.create_ftp_connection()
-            obj_ftp.cwd(parent_directory)
+
             for f in list_of_files:
                 obj_ftp.sendcmd("TYPE i")
-                with open(f) as download:
-                    obj_ftp.retrbinary("RETR " + f, download.write)
-                print("Successfully downloaded: " + f)
-                shutil.move(f, os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory)
+                with open(str(f).replace("u'","").replace("'",""), "wb") as download:
+                    obj_ftp.retrbinary("RETR " + parent_directory + self.directory_separator + f, download.write)
 
+                shutil.move(f, os.environ["FtpSyncLocalDirectory"] + self.directory_separator + parent_directory.replace(os.environ["FtpSyncRemoteDirectory"], ""))
         except Exception as e:
             print("Error downloading: " + str(e))
-        return
+
 processor = DownloadProcessor("/Users/jwisdom/Dev/Workspace/GitRepos/Python-FTP-Sync/PendingDownloadQueue")
