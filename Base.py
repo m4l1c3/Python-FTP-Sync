@@ -1,11 +1,10 @@
 import platform
-from Logger import Logger
 
 
 class Base():
     current_os = ""
     directory_separator = ""
-    logger = Logger("Initializing Base")
+    # logger = Logger("Initializing Base")
 
     def __init__(self):
         self.current_os = platform.system()
