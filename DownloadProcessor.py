@@ -7,6 +7,8 @@ import os
 from ftpSync import FileSyncer
 from Base import Base
 from Download import Download
+from Extractor import Extractor
+from Cleaner import Cleaner
 
 class DownloadProcessor(Base):
     timeOut = 60 * 60
@@ -69,6 +71,7 @@ class DownloadProcessor(Base):
 
                 for f in download_data["Files"]:
                     Download(self.ftp_sync, f, download_data["Files"][f])
+                    Extractor(f.replace(self.remote_directory_to_sync, self.local_directory_to_sync), f.replace(self.remote_directory_to_sync, self.local_directory_to_sync))
 
             except Exception as e:
                 print("Error - Unable to download file: " + str(download_file) + ", " + str(e))
