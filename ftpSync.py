@@ -10,32 +10,19 @@ from Logger import Logger
 
 
 class FileSyncer(Base):
-    ftpConnection = None
-    ftpUser = ""
-    ftpPassword = ""
-    ftpServer = ""
-    ftpPort = 21
-    remoteDirectoryToSync = ""
-    localDirectoryToSync = ""
-    currentWorkingDirectory = ""
-    remoteDirectoryTree = {}
+    ftp_connection = None
+    remote_directory_tree = {}
     check_for_directory_reg_ex = re.compile("\d")
-
-    def __init__(self, server, user, password, port, remote_directory, local_directory):
+    current_working_directory = ""
+    def __init__(self):
         Base.__init__(self)
-        self.ftpServer = server
-        self.ftpUser = user
-        self.ftpPassword = password
-        self.ftpPort = port
-        self.remoteDirectoryToSync = remote_directory
-        self.localDirectoryToSync = local_directory
         self.synchronize()
 
     def create_ftp_connection(self):
         Logger("Status - Opening FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
         ftp = FTP()
-        ftp.connect(self.ftpServer, int(self.ftpPort))
-        ftp.login(self.ftpUser, self.ftpPassword)
+        ftp.connect(self.ftp_server, int(self.ftp_port))
+        ftp.login(self.ftp_user, self.ftp_password)
         return ftp
 
     @staticmethod
@@ -53,7 +40,7 @@ class FileSyncer(Base):
             if not f.startswith("."):
                 list_of_files.append(f[:f.rfind(".txt")])
 
-        for f in os.listdir(self.localDirectoryToSync):
+        for f in os.listdir(self.local_directory_to_sync):
             list_of_files.append(f)
 
         if not os.path.isdir("ProcessingFiles"):
@@ -69,13 +56,13 @@ class FileSyncer(Base):
         list_of_files = []
 
         try:
-            obj_ftp.cwd(self.remoteDirectoryToSync)
+            obj_ftp.cwd(self.remote_directory_to_sync)
             obj_ftp.retrlines('NLST', list_of_files.append)
             Logger("Status - Creating Remote File List")
 
         except Exception as resp:
             if str(resp) == "550 No files found":
-                Logger("Error - No files in this directory -- 550 No files found, " + self.remoteDirectoryToSync)
+                Logger("Error - No files in this directory -- 550 No files found, " + self.remote_directory_to_sync)
             else:
                 raise
 
@@ -87,10 +74,10 @@ class FileSyncer(Base):
 
     def create_local_directory(self, folder_to_create):
         try:
-            if not os.path.isdir(self.localDirectoryToSync + self.directory_separator + folder_to_create):
-                os.mkdir(self.localDirectoryToSync + self.directory_separator + folder_to_create)
+            if not os.path.isdir(self.local_directory_to_sync + self.directory_separator + folder_to_create):
+                os.mkdir(self.local_directory_to_sync + self.directory_separator + folder_to_create)
             else:
-                Logger("Status - Directory: " + self.localDirectoryToSync + self.directory_separator + folder_to_create
+                Logger("Status - Directory: " + self.local_directory_to_sync + self.directory_separator + folder_to_create
                        + " already exists.\n")
 
         except Exception as e:
@@ -105,9 +92,9 @@ class FileSyncer(Base):
         child_items = {}
 
         try:
-            obj_ftp.cwd(self.remoteDirectoryToSync + self.directory_separator + file_to_scan)
+            obj_ftp.cwd(self.remote_directory_to_sync + self.directory_separator + file_to_scan)
             obj_ftp.retrlines('LIST', files.append)
-            self.remoteDirectoryTree[obj_ftp.pwd()] = []
+            self.remote_directory_tree[obj_ftp.pwd()] = []
 
             for f in files:
                 index = self.check_for_directory_reg_ex.search(f)
@@ -120,7 +107,7 @@ class FileSyncer(Base):
                     #we do not have a directory
                     directory_files.append(file_or_directory_name)
 
-            self.remoteDirectoryTree[obj_ftp.pwd()] = directory_files
+            self.remote_directory_tree[obj_ftp.pwd()] = directory_files
 
         except Exception as e:
             Logger("Error - An error has occurred checking for child items: " + str(e))
@@ -129,13 +116,12 @@ class FileSyncer(Base):
             for d in directory_directories:
                 self.get_directory_structure(obj_ftp, file_to_scan + self.directory_separator + d)
 
-        child_items["Files"] = self.remoteDirectoryTree
+        child_items["Files"] = self.remote_directory_tree
 
         return child_items
 
     @staticmethod
     def find_folder_files(directory_tree, current_directory, directory_files):
-
         directory_tree["Files"][current_directory] = directory_files
 
         return directory_tree
@@ -146,13 +132,13 @@ class FileSyncer(Base):
                 os.mkdir("PendingDownloadQueue")
 
             try:
-                for singleFile in list_of_remote_files:
-                    self.remoteDirectoryTree = {}
+                for single_file in list_of_remote_files:
+                    self.remote_directory_tree = {}
 
-                    with open("PendingDownloadQueue" + self.directory_separator + singleFile + ".txt", "w") as f:
+                    with open("PendingDownloadQueue" + self.directory_separator + single_file + ".txt", "w") as f:
                         f.write(json.dumps
                                 (
-                                    self.get_directory_structure(obj_ftp, singleFile),
+                                    self.get_directory_structure(obj_ftp, single_file),
                                     separators=(',', ':'), indent=4, sort_keys=True
                                 )
                                )
