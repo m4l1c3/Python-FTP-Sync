@@ -6,30 +6,30 @@ from Base import Base
 
 
 class Cleaner(Base):
-    pathToClean = ""
-    typeOfRemoval = ""
-    removalRegEx = ""
+    path_to_clean = ""
+    type_of_removal = ""
+    removal_reg_ex = ""
     file_list = []
 
     def __init__(self, path_to_clean, type_of_removal, file_list=[], removal_regex=""):
         Base.__init__(self)
-        self.pathToClean = path_to_clean
-        self.typeOfRemoval = type_of_removal
+        self.path_to_clean = path_to_clean
+        self.type_of_removal = type_of_removal
         self.fileList = file_list
 
         if removal_regex:
-            self.removalRegEx = re.compile(removal_regex)
+            self.removal_reg_ex = re.compile(removal_regex)
 
     def remove(self):
         if self.is_regex():
-            for f in os.listdir(self.pathToClean):
-                if self.removalRegEx.search(f):
-                    self.remove_single_file(self.pathToClean + self.directory_separator + f)
+            for f in os.listdir(self.path_to_clean):
+                if self.removal_reg_ex.search(f):
+                    self.remove_single_file(self.path_to_clean + self.directory_separator + f)
         elif self.is_tree:
-            shutil.rmtree(self.pathToClean)
+            shutil.rmtree(self.path_to_clean)
         elif self.is_a_file:
             for f in self.file_list:
-                self.remove_single_file(self.pathToClean + self.directory_separator + f)
+                self.remove_single_file(self.path_to_clean + self.directory_separator + f)
         else:
             return False
 
@@ -40,7 +40,7 @@ class Cleaner(Base):
             print("Error - Problem removing: " + file_to_remove + ", " + str(e))
 
     def is_regex(self):
-        if type(self.removalRegEx) is "<class '_sre.SRE_Pattern'>":
+        if type(self.removal_reg_ex) is "<class '_sre.SRE_Pattern'>":
             return True
         else:
             return False
@@ -53,7 +53,7 @@ class Cleaner(Base):
             return False
 
     def is_tree(self):
-        if self.typeOfRemoval == "tree":
+        if self.type_of_removal == "tree":
             return True
         else:
             return False
