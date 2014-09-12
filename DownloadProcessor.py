@@ -34,7 +34,10 @@ class DownloadProcessor(Base):
             except Exception as e:
                 print("Error - Unable to process: " + single_file + " " + str(e))
             finally:
-                os.remove("ProcessingFiles" + self.directory_separator + single_file)
+                try:
+                    os.remove("ProcessingFiles" + self.directory_separator + single_file)
+                except Exception as e:
+                    print("Error - Unable to remove: ProcessingFiles", self.directory_separator, single_file)
 
         for single_file in files_to_process:
             try:
@@ -44,7 +47,10 @@ class DownloadProcessor(Base):
                 print("Error - Unable to move: " + single_file + " into queue.  " + str(e))
                 self.move_file_into_failed(single_file)
             finally:
-                os.remove("ProcessingFiles" + self.directory_separator + single_file)
+                try:
+                    os.remove("ProcessingFiles" + self.directory_separator + single_file)
+                except Exception as e:
+                    print("Error - Unable to remove: ProcessingFiles", self.directory_separator, single_file)
 
     def move_file_into_failed(self, failed_file):
         if not os.path.isdir("FailedFiles"):
@@ -70,7 +76,9 @@ class DownloadProcessor(Base):
                     self.map_download_directories(f.replace(self.remote_directory_to_sync + "/", ""))
 
                 for f in download_data["Files"]:
-                    Download(self.ftp_sync, f, download_data["Files"][f])
+                    for file_to_download in download_data["Files"][f]:
+                        Download(self.ftp_sync, f, file_to_download)
+
                     Extractor(f.replace(self.remote_directory_to_sync, self.local_directory_to_sync), f.replace(self.remote_directory_to_sync, self.local_directory_to_sync))
 
             except Exception as e:
@@ -78,4 +86,4 @@ class DownloadProcessor(Base):
 
 
 
-processor = DownloadProcessor("/Users/jwisdom/Dev/Workspace/GitRepos/Python-FTP-Sync/PendingDownloadQueue")
+processor = DownloadProcessor("/Users/jonwisdom/Dev/Workspace/Python-FTP-Sync/PendingDownloadQueue")

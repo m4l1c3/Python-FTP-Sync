@@ -75,7 +75,3 @@ class Extractor(Base):
             return False
         else:
             return True
-
-
-ext = Extractor("/Users/jonwisdom/Desktop/PythonTest", "/Users/jonwisdom/Desktop/rar")
-ext.extract()
