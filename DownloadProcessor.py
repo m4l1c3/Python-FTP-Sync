@@ -79,11 +79,13 @@ class DownloadProcessor(Base):
                     for file_to_download in download_data["Files"][f]:
                         Download(self.ftp_sync, f, file_to_download)
 
-                    Extractor(f.replace(self.remote_directory_to_sync, self.local_directory_to_sync), f.replace(self.remote_directory_to_sync, self.local_directory_to_sync))
+                    Extractor(f.replace(self.remote_directory_to_sync, self.local_directory_to_sync),
+                              f.replace(self.remote_directory_to_sync, self.local_directory_to_sync))
+                    Cleaner(f.replace(self.remote_directory_to_sync, self.local_directory_to_sync), download_data["Files"][f])
 
             except Exception as e:
                 print("Error - Unable to download file: " + str(download_file) + ", " + str(e))
 
 
 
-processor = DownloadProcessor("/Users/jonwisdom/Dev/Workspace/Python-FTP-Sync/PendingDownloadQueue")
+processor = DownloadProcessor("PendingDownloadQueue")
