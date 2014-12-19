@@ -11,10 +11,9 @@ class Cleaner(Base):
     removal_reg_ex = ""
     file_list = []
 
-    def __init__(self, path_to_clean, type_of_removal, file_list=[], removal_regex=""):
+    def __init__(self, path_to_clean, file_list=[], removal_regex=""):
         Base.__init__(self)
         self.path_to_clean = path_to_clean
-        self.type_of_removal = type_of_removal
         self.fileList = file_list
 
         if removal_regex:
