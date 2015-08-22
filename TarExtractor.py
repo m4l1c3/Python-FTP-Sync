@@ -1,6 +1,6 @@
 import tarfile
 from Base import Base
-
+from Logger import Logger
 
 class TarArchive(Base):
     containing_folder = ""
@@ -17,8 +17,8 @@ class TarArchive(Base):
     def process_tar_archive(self):
         try:
             obj_tar_file = tarfile.open(self.containing_folder + self.directory_separator + self.archive_file)
-            print("Extracting: " + str(obj_tar_file))
+            Logger("Extracting: " + str(obj_tar_file))
             obj_tar_file.extractall(self.destination_folder)
             obj_tar_file.close()
         except Exception as e:
-            print("Error - Unable to extract tar: " + str(e))
+            Logger("Error - Unable to extract tar: " + str(e))
