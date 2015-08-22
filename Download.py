@@ -3,6 +3,8 @@ import os
 
 from Base import Base
 from ftpSync import FileSyncer
+from Logger import Logger
+
 
 class Download(Base):
     ftp_connection = None
@@ -22,9 +24,11 @@ class Download(Base):
             obj_ftp = self.ftp_connection.create_ftp_connection()
             obj_ftp.sendcmd("TYPE i")
             with open(str(self.file_to_download).replace("u'","").replace("'",""), "wb") as file:
-                print("Downloading: " + self.file_to_download)
-                obj_ftp.retrbinary("RETR " + self.parent_directory + self.directory_separator + self.file_to_download, file.write)
+                Logger("Downloading: " + self.file_to_download)
+                obj_ftp.retrbinary("RETR " + self.parent_directory + self.directory_separator +
+                                   self.file_to_download, file.write)
 
-            shutil.move(self.file_to_download, self.local_directory_to_sync + self.directory_separator + self.parent_directory.replace(self.remote_directory_to_sync, ""))
+            shutil.move(self.file_to_download, self.local_directory_to_sync + self.directory_separator +
+                        self.parent_directory.replace(self.remote_directory_to_sync, ""))
         except Exception as e:
-            print("Error downloading: " + str(e))
+            Logger("Error downloading: " + str(e))
