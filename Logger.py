@@ -16,6 +16,8 @@ class Logger(Base):
         if not os.path.isdir("Logs"):
             os.mkdir("Logs")
 
-        log_filename = "Logs" + self.directory_separator + datetime.datetime.now().strftime("%Y-%m-%d") + ".log"
+        log_filename = "Logs" + self.directory_separator
+        log_filename += datetime.datetime.now().strftime("%Y-%m-%d") + ".log"
         logging.basicConfig(filename=log_filename, level=logging.DEBUG)
         logging.debug(self.message)
+
