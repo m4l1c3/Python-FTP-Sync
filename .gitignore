@@ -3,4 +3,8 @@
 *.pyc
 /Logs
 /PendingDownloadQueue
+/ProcessingFiles
 .idea
+node_modules
+*.swp
+Base.py

@@ -1,55 +1,33 @@
 #!/Library/Frameworks/Python.framework/Versions/3.4/bin python3
 import os
 import re
-import logging
 import datetime
 import json
 
 from ftplib import FTP
 from Base import Base
-
-
-def logger(message):
-    if os.path.isdir("Logs") == False:
-        os.mkdir("Logs")
-
-    log_filename = "Logs/" + datetime.datetime.now().strftime("%Y-%m-%d") + ".log"
-    logging.basicConfig(filename=log_filename, level=logging.DEBUG)
-    logging.debug(message)
+from Logger import Logger
 
 
 class FileSyncer(Base):
-    ftpConnection = None
-    ftpUser = ""
-    ftpPassword = ""
-    ftpServer = ""
-    ftpPort = 21
-    remoteDirectoryToSync = ""
-    localDirectoryToSync = ""
-    subScans = 0
-    currentWorkingDirectory = ""
-    remoteDirectoryTree = {}
+    ftp_connection = None
+    remote_directory_tree = {}
     check_for_directory_reg_ex = re.compile("\d")
-
-    def __init__(self, server, user, password, port, remote_directory, local_directory):
+    current_working_directory = ""
+    def __init__(self):
         Base.__init__(self)
-        self.ftpServer = server
-        self.ftpUser = user
-        self.ftpPassword = password
-        self.ftpPort = port
-        self.remoteDirectoryToSync = remote_directory
-        self.localDirectoryToSync = local_directory
+        self.synchronize()
 
     def create_ftp_connection(self):
-        logger("Status - Opening FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+        Logger("Status - Opening FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
         ftp = FTP()
-        ftp.connect(self.ftpServer, int(self.ftpPort))
-        ftp.login(self.ftpUser, self.ftpPassword)
+        ftp.connect(self.ftp_server, int(self.ftp_port))
+        ftp.login(self.ftp_user, self.ftp_password)
         return ftp
 
     @staticmethod
     def close_ftp_connection(obj_ftp):
-        logger("Status - Closing FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+        Logger("Status - Closing FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
         obj_ftp.close()
 
     def check_local_folders(self):
@@ -58,14 +36,19 @@ class FileSyncer(Base):
         if not os.path.isdir("PendingDownloadQueue"):
             os.mkdir("PendingDownloadQueue")
 
-        if os.listdir("PendingDownloadQueue"):
-            for f in os.listdir("PendingDownloadQueue"):
-                if not f.startswith("."):
-                    list_of_files.append(f[:f.rfind(".txt")])
+        for f in os.listdir("PendingDownloadQueue"):
+            if not f.startswith("."):
+                list_of_files.append(f[:f.rfind(".txt")])
 
-        if os.listdir(self.localDirectoryToSync):
-            for f in os.listdir(self.localDirectoryToSync):
-                list_of_files.append(f)
+        for f in os.listdir(self.local_directory_to_sync):
+            list_of_files.append(f)
+
+        if not os.path.isdir("ProcessingFiles"):
+            os.mkdir("ProcessingFiles")
+
+        for f in os.listdir("ProcessingFiles"):
+            if not f.startswith("."):
+                list_of_files.append(f[:f.rfind(".txt")])
 
         return list_of_files
 
@@ -73,34 +56,35 @@ class FileSyncer(Base):
         list_of_files = []
 
         try:
-            obj_ftp.cwd(self.remoteDirectoryToSync)
+            obj_ftp.cwd(self.remote_directory_to_sync)
             obj_ftp.retrlines('NLST', list_of_files.append)
-            logger("Status - Creating Remote File List")
+            Logger("Status - Creating Remote File List")
 
         except Exception as resp:
             if str(resp) == "550 No files found":
-                logger("Error - No files in this directory -- 550 No files found, " + self.remoteDirectoryToSync)
+                Logger("Error - No files in this directory -- 550 No files found, " + self.remote_directory_to_sync)
             else:
                 raise
 
         return list_of_files
 
-    def find_missing_folders(self, local_list, remote_list):
+    @staticmethod
+    def find_missing_folders(local_list, remote_list):
         return [i for i in remote_list if i not in local_list]
 
     def create_local_directory(self, folder_to_create):
         try:
-            if not os.path.isdir(self.localDirectoryToSync + self.directory_separator + folder_to_create):
-                os.mkdir(self.localDirectoryToSync + self.directory_separator + folder_to_create)
+            if not os.path.isdir(self.local_directory_to_sync + self.directory_separator + folder_to_create):
+                os.mkdir(self.local_directory_to_sync + self.directory_separator + folder_to_create)
             else:
-                logger("Status - Directory: " + self.localDirectoryToSync + self.directory_separator + folder_to_create
+                Logger("Status - Directory: " + self.local_directory_to_sync + self.directory_separator + folder_to_create
                        + " already exists.\n")
 
         except Exception as e:
-            logger("Error - creating local directory: " + str(e))
+            Logger("Error - creating local directory: " + str(e))
 
     def get_directory_structure(self, obj_ftp, file_to_scan):
-        logger("Status - Checking: " + file_to_scan + " for files and folders")
+        Logger("Status - Checking: " + file_to_scan + " for files and folders")
 
         directory_directories = []
         directory_files = []
@@ -108,9 +92,9 @@ class FileSyncer(Base):
         child_items = {}
 
         try:
-            obj_ftp.cwd(self.remoteDirectoryToSync + "/" + file_to_scan)
+            obj_ftp.cwd(self.remote_directory_to_sync + self.directory_separator + file_to_scan)
             obj_ftp.retrlines('LIST', files.append)
-            self.remoteDirectoryTree[obj_ftp.pwd()] = []
+            self.remote_directory_tree[obj_ftp.pwd()] = []
 
             for f in files:
                 index = self.check_for_directory_reg_ex.search(f)
@@ -123,21 +107,21 @@ class FileSyncer(Base):
                     #we do not have a directory
                     directory_files.append(file_or_directory_name)
 
-            self.remoteDirectoryTree[obj_ftp.pwd()] = directory_files
+            self.remote_directory_tree[obj_ftp.pwd()] = directory_files
 
         except Exception as e:
-            logger("Error - An error has occurred checking for child items: " + str(e))
+            Logger("Error - An error has occurred checking for child items: " + str(e))
 
         if directory_directories:
-            for dir in directory_directories:
-                self.get_directory_structure(obj_ftp, file_to_scan + self.directory_separator + dir)
+            for d in directory_directories:
+                self.get_directory_structure(obj_ftp, file_to_scan + self.directory_separator + d)
 
-        child_items["Files"] = self.remoteDirectoryTree
+        child_items["Files"] = self.remote_directory_tree
 
         return child_items
 
-    def find_folder_files(self, obj_ftp, directory_tree, current_directory, directory_files):
-
+    @staticmethod
+    def find_folder_files(directory_tree, current_directory, directory_files):
         directory_tree["Files"][current_directory] = directory_files
 
         return directory_tree
@@ -148,26 +132,28 @@ class FileSyncer(Base):
                 os.mkdir("PendingDownloadQueue")
 
             try:
-                for singleFile in list_of_remote_files:
-                    self.remoteDirectoryTree = {}
+                for single_file in list_of_remote_files:
+                    self.remote_directory_tree = {}
 
-                    with open("PendingDownloadQueue/" + singleFile + ".txt", "w") as f:
-                        f.write(json.dumps(self.get_directory_structure(obj_ftp, singleFile), separators=(',', ':'), indent=4))
+                    with open("PendingDownloadQueue" + self.directory_separator + single_file + ".txt", "w") as f:
+                        f.write(json.dumps
+                                (
+                                    self.get_directory_structure(obj_ftp, single_file),
+                                    separators=(',', ':'), indent=4, sort_keys=True
+                                )
+                               )
 
                 self.close_ftp_connection(obj_ftp)
 
             except Exception as e:
-                logger("Error - Unable to write datafile: " + str(e))
+                Logger("Error - Unable to write datafile: " + str(e))
 
         except Exception as e:
-            logger("Error - Unable to create download queue folder: " + str(e))
+            Logger("Error - Unable to create download queue folder: " + str(e))
 
-def init():
-    ftp_connection = FileSyncer(os.environ["FtpSyncServer"], os.environ["FtpSyncUser"], os.environ["FtpSyncPassword"], os.environ["FtpSyncPort"], os.environ["FtpSyncRemoteDirectory"], os.environ["FtpSyncLocalDirectory"])
-    obj_ftp = ftp_connection.create_ftp_connection()
-    list_of_local_folders = ftp_connection.check_local_folders()
-    list_of_remote_folders = ftp_connection.check_remote_folders(obj_ftp)
-    missing_files = ftp_connection.find_missing_folders(list_of_local_folders, list_of_remote_folders)
-    ftp_connection.append_download_queue(obj_ftp, missing_files)
-
-init()
+    def synchronize(self):
+        obj_ftp = self.create_ftp_connection()
+        list_of_local_folders = self.check_local_folders()
+        list_of_remote_folders = self.check_remote_folders(obj_ftp)
+        missing_files = self.find_missing_folders(list_of_local_folders, list_of_remote_folders)
+        self.append_download_queue(obj_ftp, missing_files)
