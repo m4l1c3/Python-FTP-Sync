@@ -1,10 +1,9 @@
 #!/Library/Frameworks/Python.framework/Versions/3.4/bin python3
 import os
 import re
-import datetime
 import json
-
 from ftplib import FTP
+
 from Base import Base
 from Logger import Logger
 
@@ -19,7 +18,6 @@ class FileSyncer(Base):
         self.synchronize()
 
     def create_ftp_connection(self):
-        Logger("Status - Opening FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
         ftp = FTP()
         ftp.connect(self.ftp_server, int(self.ftp_port))
         ftp.login(self.ftp_user, self.ftp_password)
@@ -27,7 +25,6 @@ class FileSyncer(Base):
 
     @staticmethod
     def close_ftp_connection(obj_ftp):
-        Logger("Status - Closing FTP Connection at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
         obj_ftp.close()
 
     def check_local_folders(self):
@@ -58,7 +55,6 @@ class FileSyncer(Base):
         try:
             obj_ftp.cwd(self.remote_directory_to_sync)
             obj_ftp.retrlines('NLST', list_of_files.append)
-            Logger("Status - Creating Remote File List")
 
         except Exception as resp:
             if str(resp) == "550 No files found":
@@ -77,15 +73,12 @@ class FileSyncer(Base):
             if not os.path.isdir(self.local_directory_to_sync + self.directory_separator + folder_to_create):
                 os.mkdir(self.local_directory_to_sync + self.directory_separator + folder_to_create)
             else:
-                Logger("Status - Directory: " + self.local_directory_to_sync + self.directory_separator + folder_to_create
-                       + " already exists.\n")
+                return
 
         except Exception as e:
             Logger("Error - creating local directory: " + str(e))
 
     def get_directory_structure(self, obj_ftp, file_to_scan):
-        Logger("Status - Checking: " + file_to_scan + " for files and folders")
-
         directory_directories = []
         directory_files = []
         files = []

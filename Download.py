@@ -1,8 +1,6 @@
 import shutil
-import os
 
 from Base import Base
-from ftpSync import FileSyncer
 from Logger import Logger
 
 
@@ -24,7 +22,6 @@ class Download(Base):
             obj_ftp = self.ftp_connection.create_ftp_connection()
             obj_ftp.sendcmd("TYPE i")
             with open(str(self.file_to_download).replace("u'","").replace("'",""), "wb") as file:
-                Logger("Downloading: " + self.file_to_download)
                 obj_ftp.retrbinary("RETR " + self.parent_directory + self.directory_separator +
                                    self.file_to_download, file.write)
 

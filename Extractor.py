@@ -9,6 +9,7 @@ from TarExtractor import TarArchive
 from RarExtractor import RarExtractor
 from ZipExtractor import ZipArchive
 from Logger import Logger
+
 rar_file = imp.load_source('rarfile', 'rarfile/rarfile.py')
 
 
@@ -57,16 +58,13 @@ class Extractor(Base):
         full_file_path = self.extraction_path + self.directory_separator + parent_folder + self.directory_separator \
                          + file_to_check
         if self.is_rar_archive(full_file_path):
-            Logger("Status - UnRar Archive: " + full_file_path)
             RarExtractor(parent_folder_path, full_file_path)
             return True
         else:
             if self.is_zip_archive(full_file_path):
-                Logger("Status - Attempting to extract ZIP Archive: " + full_file_path)
                 ZipArchive(parent_folder_path, sorted(os.listdir(parent_folder))[0])
                 return True
             if self.is_tar_archive(full_file_path):
-                Logger("Status - Attempting to extract TAR Archive in: " + full_file_path)
                 TarArchive(parent_folder_path, sorted(os.listdir(parent_folder_path))[0])
                 return True
         return False

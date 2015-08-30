@@ -4,12 +4,13 @@ import json
 import shutil
 import os
 
-from ftpSync import FileSyncer
 from Base import Base
+from FileSyncer import FileSyncer
 from Download import Download
 from Extractor import Extractor
 from Cleaner import Cleaner
 from Logger import Logger
+
 
 class DownloadProcessor(Base):
     timeOut = 60 * 60
@@ -43,7 +44,7 @@ class DownloadProcessor(Base):
                 try:
                     os.remove("ProcessingFiles" + self.directory_separator + single_file)
                 except Exception as e:
-                    Logger("Error - Unable to remove: ProcessingFiles", self.directory_separator, single_file)
+                    Logger("Error - Unable to remove: ProcessingFiles" + self.directory_separator + single_file)
 
         for single_file in files_to_process:
             try:
@@ -56,7 +57,7 @@ class DownloadProcessor(Base):
                 try:
                     os.remove("ProcessingFiles" + self.directory_separator + single_file)
                 except Exception as e:
-                    Logger("Error - Unable to remove: ProcessingFiles", self.directory_separator, single_file)
+                    Logger("Error - Unable to remove: ProcessingFiles" + self.directory_separator + single_file)
 
     def move_file_into_failed(self, failed_file):
         if not os.path.isdir("FailedFiles"):
@@ -71,7 +72,7 @@ class DownloadProcessor(Base):
             try:
                 os.mkdir(self.local_directory_to_sync + self.directory_separator + parent_directory)
             except OSError as e:
-                Logger("Unable to create directory: " + self.local_directory_to_sync +
+                Logger("Error - Unable to create directory: " + self.local_directory_to_sync +
                         self.directory_separator + parent_directory + " " + str(e))
 
     def process_download_file(self, file_to_process):

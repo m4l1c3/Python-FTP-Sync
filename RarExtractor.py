@@ -1,4 +1,5 @@
 import imp
+
 from Base import Base
 from Logger import Logger
 
@@ -19,7 +20,6 @@ class RarExtractor(Base):
     def process_rar_archive(self):
         try:
             with rar_file.RarFile(self.archive_file) as obj_rar_file:
-                Logger("Status - Extracting - " + str(obj_rar_file))
                 obj_rar_file.extractall(self.source_directory + self.directory_separator)
         except Exception as e:
             Logger("Error - Unable to extract rar: " + str(e))
