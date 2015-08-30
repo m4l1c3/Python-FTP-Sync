@@ -4,7 +4,7 @@ from Base import Base
 from Logger import Logger
 
 
-class ZipArchive(Base):
+class ZipExtractor(Base):
     source_directory = ""
     destination_directory = ""
     archive_file = ""

@@ -4,7 +4,7 @@ from Base import Base
 from Logger import Logger
 
 
-class TarArchive(Base):
+class TarExtractor(Base):
     containing_folder = ""
     destination_folder = ""
     archive_file = ""

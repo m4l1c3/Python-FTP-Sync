@@ -5,9 +5,9 @@ import re
 import tarfile
 
 from Base import Base
-from TarExtractor import TarArchive
+from TarExtractor import TarExtractor
 from RarExtractor import RarExtractor
-from ZipExtractor import ZipArchive
+from ZipExtractor import ZipExtractor
 from Logger import Logger
 
 rar_file = imp.load_source('rarfile', 'rarfile/rarfile.py')
@@ -62,10 +62,10 @@ class Extractor(Base):
             return True
         else:
             if self.is_zip_archive(full_file_path):
-                ZipArchive(parent_folder_path, sorted(os.listdir(parent_folder))[0])
+                ZipExtractor(parent_folder_path, sorted(os.listdir(parent_folder))[0])
                 return True
             if self.is_tar_archive(full_file_path):
-                TarArchive(parent_folder_path, sorted(os.listdir(parent_folder_path))[0])
+                TarExtractor(parent_folder_path, sorted(os.listdir(parent_folder_path))[0])
                 return True
         return False
 
